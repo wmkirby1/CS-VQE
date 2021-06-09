@@ -559,7 +559,7 @@ def pauli_to_sparse(P):
         sgn = bin(r&z)
         vals.append( ((-1.0)**sum([int(sgn[i]) for i in range(2,len(sgn))])) * ((-1j)**y) )
         
-    m = coo_matrix( (vals, (rows, cols)) )
+    m = coo_matrix( (vals, (rows, cols)), dtype=np.csingle)
     
     return m.tocsr()
 
