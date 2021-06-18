@@ -1,3 +1,4 @@
 *.png
 *checkpoint.ipynb
 token.txt
+*.pyc
