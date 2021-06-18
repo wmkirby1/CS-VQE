@@ -418,8 +418,10 @@ def diagonalize_epistemic(model,fn_form,ep_state):
             rotations.append( [sgn*theta, generator[0]] )
         """
         # rotations to diagonalize G union with the new A
-        GuA = deepcopy(model[0] + [model[1][0]])
-        ep_state_trans = deepcopy(ep_state[0] + [1])
+        #GuA = deepcopy(model[0] + [model[1][0]])
+        GuA = deepcopy(model[0])
+        #ep_state_trans = deepcopy(ep_state[0] + [1])
+        ep_state_trans = deepcopy(ep_state[0])
     
     # if there are no cliques...
     else:
@@ -502,7 +504,7 @@ def diagonalize_epistemic(model,fn_form,ep_state):
                     p = deepcopy(pauli_mult(J,GuA[m]))
                     GuA[m] = p[0]
                     ep_state_trans[m] = 1j*p[1]*ep_state_trans[m]
-    
+    print(rotations)
     return rotations, GuA, np.real(ep_state_trans)
 
 # Given a rotation (in the form [angle, generator]) and a Pauli p, returns a dict representing the linear combination of Paulis that results
@@ -680,6 +682,9 @@ def exp_vals(fn_form,ep_state):
 def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
 
     rotations, diagonal_set, vals = diagonalize_epistemic(model,fn_form,ep_state)
+    #myorder = [1, 2, 0, 3, 4]
+    #rotations = [rotations[i] for i in myorder]
+    print(rotations, diagonal_set, vals)
     
     n_q = len(diagonal_set[0])
     

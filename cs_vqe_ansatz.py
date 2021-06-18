@@ -2,6 +2,7 @@ from qiskit.aqua.algorithms import NumPyEigensolver#, VQE
 from qiskit.algorithms import VQE
 import matplotlib.pyplot as plt
 import numpy as np
+import itertools
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 from qiskit.chemistry.components.variational_forms import UCCSD
@@ -74,60 +75,6 @@ def connect_to_ibm(simulator: bool = False) -> IBMQBackend:
     print(backend)
 
     return backend
-
-
-def construct_reduced_hamiltonian(ham, terms_noncon=[], num_qubits = 0, out_raw_dict = False) -> PauliOp:
-    """Determine reduced Hamiltonian on minimal contextual subset
-    
-    """
-    #restructure WeightedPauliOperator ham from Qiskit list [[complex, Pauli]] -> dict {str:complex}
-    if str(type(ham)) == "<class 'qiskit.aqua.operators.legacy.weighted_pauli_operator.WeightedPauliOperator'>":
-        Paulis = ham.paulis
-        ham = {(p[1]).to_label():p[0] for p in Paulis}
-        
-    #Leave if already in correct format
-    elif str(type(ham)) == "<class 'dict'>":
-        pass
-    
-    #Reserved for alternative formats
-    else:
-        raise Exception("Unrecognised Hamiltonian Format")
-            
-    #Find largest noncontextual subset
-    if terms_noncon == []:
-        terms_noncon = c.greedy_dfs(ham, 10, criterion='weight')[-1]
-    else:
-        pass
-    
-    ham_noncon = {p:ham[p] for p in terms_noncon}
-    
-    #Contrusct epistricted model
-    model = c.quasi_model(ham_noncon)
-    fn_form = c.energy_function_form(ham_noncon, model)
-    gs_noncon = c.find_gs_noncon(ham_noncon)
-    ep_state = gs_noncon[1]
-    
-    rotations, diagonal_set, vals = c.diagonalize_epistemic(model,fn_form,ep_state)
-    print(rotations)
-    
-    if num_qubits == 0:
-        return [], gs_noncon[0]
-    
-    #elif num_qubits == len(model[0][0]):
-    #    return sum([PauliOp(Pauli(k), ham[k]) for k in ham.keys()]), gs_noncon[0]
-    
-    else:
-        #Determine contextual subspace Hamiltonians
-        order = list(range(len(model[0][0]))) #this can be user-specified in future
-        order_ref = copy.deepcopy(order) #since get_reduced_hamiltonians empties original order
-        reduced_hamiltonians = c.get_reduced_hamiltonians(ham, model, fn_form, ep_state, order)
-        red_ham = reduced_hamiltonians[num_qubits]
-
-        if out_raw_dict == True:
-            return red_ham, gs_noncon[0]
-        else:
-            #return WeightedPauliOperator([[red_ham[k], Pauli(k)] for k in red_ham.keys()]), gs_noncon[0]
-            return sum([PauliOp(Pauli(k), red_ham[k]) for k in red_ham.keys()]), gs_noncon[0]
 
 
 def exp_P(p_string, rot=0):
@@ -234,45 +181,87 @@ def construct_ansatz(init_state=[], paulis=[], rots=[]) -> QuantumCircuit:
     
     #rotates in accordance with CS-VQE routine
     for r in rots:
-        circ += exp_P(r, np.pi/4)
+        circ += exp_P(r[1], r[0])
       
     return circ
 
+
+def construct_reduced_hamiltonian(ham, terms_noncon=[], num_qubits = 0, out_raw_dict = False) -> PauliOp:
+    """Determine reduced Hamiltonian on minimal contextual subset
+    
+    """
+    #restructure WeightedPauliOperator ham from Qiskit list [[complex, Pauli]] -> dict {str:complex}
+    if str(type(ham)) == "<class 'qiskit.aqua.operators.legacy.weighted_pauli_operator.WeightedPauliOperator'>":
+        Paulis = ham.paulis
+        ham = {(p[1]).to_label():p[0] for p in Paulis}
         
-def CS_VQE(ham, terms_noncon, num_qubits, ansatz, num_orbitals=0, num_particles=0, shift=0, 
-           backend=BasicAer.get_backend("statevector_simulator"), optimizer = SLSQP(maxiter=1000)):
+    #Leave if already in correct format
+    elif str(type(ham)) == "<class 'dict'>":
+        pass
+    
+    #Reserved for alternative formats
+    else:
+        raise Exception("Unrecognised Hamiltonian Format")
+            
+    #Find largest noncontextual subset
+    if terms_noncon == []:
+        terms_noncon = c.greedy_dfs(ham, 10, criterion='weight')[-1]
+    
+    ham_noncon = {p:ham[p] for p in terms_noncon}
+    
+    #Contrusct epistricted model
+    model = c.quasi_model(ham_noncon)
+    print(model)
+    fn_form = c.energy_function_form(ham_noncon, model)
+    gs_noncon = c.find_gs_noncon(ham_noncon)
+    ep_state = gs_noncon[1]
+    
+    rotations, diagonal_set, vals = c.diagonalize_epistemic(model,fn_form,ep_state)
+    #print(rotations)
+    
+    if num_qubits == 0:
+        return [], gs_noncon[0]
+    
+    #elif num_qubits == len(model[0][0]):
+    #    return sum([PauliOp(Pauli(k), ham[k]) for k in ham.keys()]), gs_noncon[0]
+    
+    else:
+        #Determine contextual subspace Hamiltonians
+        order = list(range(len(model[0][0]))) #this can be user-specified in future
+        order_ref = copy.deepcopy(order) #since get_reduced_hamiltonians empties original order
+        reduced_hamiltonians = c.get_reduced_hamiltonians(ham, model, fn_form, ep_state, order)
+        red_ham = reduced_hamiltonians[num_qubits]
+
+        if out_raw_dict == True:
+            return red_ham, gs_noncon[0]
+        else:
+            #return WeightedPauliOperator([[red_ham[k], Pauli(k)] for k in red_ham.keys()]), gs_noncon[0]
+            return sum([PauliOp(Pauli(k), red_ham[k]) for k in red_ham.keys()]), gs_noncon[0]
+
+        
+def CS_VQE(ham, terms_noncon, num_qubits, ansatz=None, num_orbitals=0, num_particles=0, shift=0, 
+           backend=BasicAer.get_backend("statevector_simulator"), optimizer = SLSQP(maxiter=10000)):
     """
     """
     red_ham, gs_approx = construct_reduced_hamiltonian(ham, terms_noncon, num_qubits)
-    
+    print(red_ham)
     if num_qubits == 0:
-        return gs_approx + shift
+        return gs_approx + shift#, exact_result
     
     else:
-        """
-        initial_state = HartreeFock(
-            num_orbitals=num_orbitals,
-            num_particles=num_particles,
-            qubit_mapping='parity')
-        #print(initial_state.construct_circuit(mode='vector'))
-
-        var_form = UCCSD(
-            num_orbitals=num_orbitals,
-            num_particles=num_particles,
-            initial_state=initial_state,
-            qubit_mapping='parity')
-
-        ent_map = var_form.get_entangler_map('full', num_qubits)
-        ansatz = TwoLocal(num_qubits, 'ry', 'cx', ent_map, reps=2, insert_barriers=True)
-        """
-       
+        exact = NumPyEigensolver(red_ham).run()
+        exact_result = float(np.real(exact.eigenvalues)) + shift
+        
+        if ansatz is None:
+            ent_map = list(itertools.combinations(range(num_qubits), 2))
+            ansatz = TwoLocal(num_qubits, 'ry', 'cx', ent_map, reps=3, insert_barriers=True)
+            
         seed = 50
         algorithm_globals.random_seed = seed
         qi = QuantumInstance(Aer.get_backend('statevector_simulator'), seed_transpiler=seed, seed_simulator=seed)
     
         vqe = VQE(ansatz, optimizer=optimizer, quantum_instance=qi)
-        #vqe_result = np.real(vqe.run(backend)['eigenvalue']) + shift
         vqe_run    = vqe.compute_minimum_eigenvalue(operator=red_ham)
-        vqe_result = vqe_run.optimal_value# + shift
+        vqe_result = vqe_run.optimal_value + shift
 
-        return vqe_result
+        return vqe_result, exact_result
