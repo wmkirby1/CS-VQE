@@ -40,4 +40,4 @@ def WeightedPauliOperator_to_dict(op):
 
 def dict_to_WeightedPauliOperator(op):
     assert(type(op) == dict)
-    return sum([PauliOp(Pauli(p), red_ham[p]) for p in op.keys()])
+    return sum([PauliOp(Pauli(p), op[p]) for p in op.keys()])

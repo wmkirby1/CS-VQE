@@ -76,13 +76,13 @@ def contextualQ_ham(ham,verbose=False):
     S = list(ham.keys())
     # Store T all elements of S that anticommute with at least one other element in S (takes O(|S|**2) time).                                                                        
     T=[]
-    Z=[] # complement of T                                                                                                                                                           
+    Z=[] # complement of T                                                                                                                                        
     for i in range(len(S)):
         if any(not commute(S[i],S[j]) for j in range(len(S))):
             T.append(S[i])
         else:
             Z.append(S[i])
-    # Search in T for triples in which exactly one pair anticommutes; if any exist, S is contextual.                                                                                 
+    # Search in T for triples in which exactly one pair anticommutes; if any exist, S is contextual.                                                                      
     for i in range(len(T)): # WLOG, i indexes the operator that commutes with both others.                                                                                           
         for j in range(len(T)):
             for k in range(j,len(T)): # Ordering of j, k does not matter.                                                                                                            
@@ -408,7 +408,6 @@ def diagonalize_epistemic(model,fn_form,ep_state):
     # if there are cliques...
     if fn_form[1] > 0:
         # rotations to map A to a single Pauli (to be applied on left)
-        """
         for i in range(1,fn_form[1]):
             theta = np.arctan2(ep_state[1][i],np.sqrt(sum([ep_state[1][j]**2 for j in range(i)])))
             if i == 1 and ep_state[1][0] < 0:
@@ -416,12 +415,10 @@ def diagonalize_epistemic(model,fn_form,ep_state):
             generator = pauli_mult(model[1][0],model[1][i])
             sgn = generator[1].imag
             rotations.append( [sgn*theta, generator[0]] )
-        """
+    
         # rotations to diagonalize G union with the new A
-        #GuA = deepcopy(model[0] + [model[1][0]])
-        GuA = deepcopy(model[0])
-        #ep_state_trans = deepcopy(ep_state[0] + [1])
-        ep_state_trans = deepcopy(ep_state[0])
+        GuA = deepcopy(model[0] + [model[1][0]])
+        ep_state_trans = deepcopy(ep_state[0] + [1])
     
     # if there are no cliques...
     else:
@@ -504,7 +501,7 @@ def diagonalize_epistemic(model,fn_form,ep_state):
                     p = deepcopy(pauli_mult(J,GuA[m]))
                     GuA[m] = p[0]
                     ep_state_trans[m] = 1j*p[1]*ep_state_trans[m]
-    print(rotations)
+    
     return rotations, GuA, np.real(ep_state_trans)
 
 # Given a rotation (in the form [angle, generator]) and a Pauli p, returns a dict representing the linear combination of Paulis that results
@@ -562,7 +559,7 @@ def pauli_to_sparse(P):
         sgn = bin(r&z)
         vals.append( ((-1.0)**sum([int(sgn[i]) for i in range(2,len(sgn))])) * ((-1j)**y) )
         
-    m = coo_matrix( (vals, (rows, cols)), dtype=np.csingle)
+    m = coo_matrix( (vals, (rows, cols)), dtype = np.dtype(np.complex128) )
     
     return m.tocsr()
 
@@ -682,9 +679,6 @@ def exp_vals(fn_form,ep_state):
 def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
 
     rotations, diagonal_set, vals = diagonalize_epistemic(model,fn_form,ep_state)
-    #myorder = [1, 2, 0, 3, 4]
-    #rotations = [rotations[i] for i in myorder]
-    print(rotations, diagonal_set, vals)
     
     n_q = len(diagonal_set[0])
     
@@ -699,11 +693,11 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
                 order[i] -= 1
     
     out = []
-
+    
     for k in range(order_len+1):
-
+    
         ham_rotated = deepcopy(ham)
-        
+    
         for r in rotations: # rotate the full Hamiltonian to the basis with diagonal noncontextual generators
             ham_next = {}
             for t in ham_rotated.keys():
@@ -714,13 +708,13 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
                     else:
                         ham_next[t_next] = t_set_next[t_next]*ham_rotated[t]
             ham_rotated = deepcopy(ham_next)
-
+       
         z_indices = []
         for d in diagonal_set:
             for i in range(n_q):
                 if d[i] == 'Z':
                     z_indices.append(i)
-                    
+        
         ham_red = {}
     
         for t in ham_rotated.keys():
