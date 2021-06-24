@@ -408,6 +408,7 @@ def diagonalize_epistemic(model,fn_form,ep_state):
     # if there are cliques...
     if fn_form[1] > 0:
         # rotations to map A to a single Pauli (to be applied on left)
+        """
         for i in range(1,fn_form[1]):
             theta = np.arctan2(ep_state[1][i],np.sqrt(sum([ep_state[1][j]**2 for j in range(i)])))
             if i == 1 and ep_state[1][0] < 0:
@@ -415,10 +416,10 @@ def diagonalize_epistemic(model,fn_form,ep_state):
             generator = pauli_mult(model[1][0],model[1][i])
             sgn = generator[1].imag
             rotations.append( [sgn*theta, generator[0]] )
-    
+        """
         # rotations to diagonalize G union with the new A
-        GuA = deepcopy(model[0] + [model[1][0]])
-        ep_state_trans = deepcopy(ep_state[0] + [1])
+        GuA = deepcopy(model[0])# + [model[1][0]])
+        ep_state_trans = deepcopy(ep_state[0])# + [1])
     
     # if there are no cliques...
     else:
