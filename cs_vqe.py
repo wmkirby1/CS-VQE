@@ -514,7 +514,7 @@ def apply_rotation(rotation,p):
     if not commute(rotation[1],p):
         if rotation[0] == 'pi/2':
             q = pauli_mult(rotation[1],p)
-            out[q[0]] = (1j*q[1]).real
+            out[q[0]] = (-1j*q[1]).real #there is a mistake in original code here (wrong sign)
     
         else:
             out[p] = np.cos(rotation[0])
