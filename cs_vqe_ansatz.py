@@ -167,8 +167,13 @@ def construct_ansatz(init_state=[], paulis=[], rots=[]) -> QuantumCircuit:
     rots: list of rotations from CS-VQE, applied left to right
     """
     #parameters to be optimised in VQE routine
-    params = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
-    
+    param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
+
+    params = [] 
+    for comb in list(itertools.combinations(param_chars, 3)):
+        char_str = ''.join(comb)
+        params.append(char_str)
+
     #initiate quantum state (usually Hartree Fock)
     circ = QuantumCircuit(len(paulis[0]))
     
