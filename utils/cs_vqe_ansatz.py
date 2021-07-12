@@ -30,7 +30,7 @@ from qiskit.providers.ibmq import IBMQBackend, least_busy
 from qiskit.tools.visualization import circuit_drawer
 from qiskit.providers.ibmq import least_busy
 from IPython.display import clear_output
-import cs_vqe as c
+import utils.cs_vqe as c
 import copy
 from qiskit.opflow import X, Z, I
 from qiskit.opflow.primitive_ops import PauliOp
@@ -75,6 +75,39 @@ def connect_to_ibm(simulator: bool = False) -> IBMQBackend:
     print(backend)
 
     return backend
+
+
+def ontic_prob(ep_state, ontic_state):
+    
+    if ep_state[0] != ontic_state[0]:
+        return 0
+    
+    else:
+        prod = 1
+        for index, r in enumerate(ep_state[1]):
+            f = 1/2 * abs(r + ontic_state[1][index])
+            prod *= f
+        
+        return prod    
+
+    
+def epistemic_dist(ep_state):
+    size_G = len(ep_state[0])
+    size_Ci = len(ep_state[1])
+    size_R = size_G + size_Ci
+    
+    ep_prob = {}
+    
+    ontic_states = list(itertools.product([1, -1], repeat=size_R))
+    
+    for o in ontic_states:
+        o_state = [list(o[0:size_G]), list(o[size_G:size_R])]
+        o_prob = ontic_prob(ep_state, o_state)
+        
+        if o_prob != 0:
+            ep_prob[o] = o_prob
+    
+    return ep_prob
 
 
 def exp_P(p_string, rot=0):
