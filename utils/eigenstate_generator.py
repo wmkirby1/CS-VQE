@@ -46,7 +46,7 @@ def A_action(molecule, num_qubits, basis_index):
         b2[0] = (b2[0]+1)%2
         b2[6] = (b2[6]+1)%2
         i2 = bin_to_int(b2)
-        parity = sum(b1)
+        parity = 1+sum(b1)
         Z_loc  = b1[6]
         
     else:
@@ -165,10 +165,9 @@ def qubit_map(molecule, num_qubits):
     qubit_map={}
     B = list(itertools.product([0,1], repeat=num_qubits))
     for i in range(2**(num_qubits)):
-        b1 = list(B[i])
-        b2 = A_action(molecule, b1)
-        i1 = bin_to_int(b1)
-        i2 = bin_to_int(b2)
+        i1, i2 = A_action(molecule, num_qubits, i)[0:2]
+        b1 = int_to_bin(i1, num_qubits)
+        b2 = int_to_bin(i2, num_qubits)
         qubit_map[i1] = [(i1, b1), (i2, b2)]
     return qubit_map
 
@@ -216,7 +215,7 @@ def expectation_optimiser(molecule, ham_n, ham_c, r1, r2, amps, initial_state,
     psi = np.array([0 for i in range(2**num_qubits)], dtype=complex)
     for index, i in enumerate(eigenstate_indices):
         psi += (amps[index])*add_eigenstate(molecule=molecule, r1=r1, r2=r2, theta=0, index=i, num_qubits=num_qubits)
-    print(len(amps), len(eigenstate_indices))
+    
     if rotations is not None:
         psi = rotate_state(rotations, psi)
     

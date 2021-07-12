@@ -110,7 +110,7 @@ def epistemic_dist(ep_state):
     return ep_prob
 
 
-def exp_P(p_string, rot=0):
+def exp_P(p_string, control=None, circ=None, rot=0):
     
     num_qubits = len(p_string)
     
@@ -123,8 +123,9 @@ def exp_P(p_string, rot=0):
             p_index[p] += [index]
 
     #initiate quantum circuit object
-    circ = QuantumCircuit(num_qubits)
-    circ.barrier()
+    if circ is None:
+        circ = QuantumCircuit(num_qubits)
+        circ.barrier()
     
     #Rotate X and Y Paulis into Z basis
     for q in p_index.keys():
@@ -162,8 +163,11 @@ def exp_P(p_string, rot=0):
         circ.cx(non_I[i], non_I[i+1])
     
     #apply the rotation
-    circ.rz(2*rot, non_I[-1])
-    
+    if control is None:
+        circ.rz(2*rot, non_I[-1])
+    else:
+        circ.crz(2*rot, control, non_I[-1])
+        
     #reverse cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:
         circ.cx(non_I[len(num_Z)-i-1], non_I[len(num_Z)-i])
@@ -193,33 +197,34 @@ def exp_P(p_string, rot=0):
     return circ
 
 
-def construct_ansatz(init_state=[], paulis=[], rots=[]) -> QuantumCircuit:
+def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None) -> QuantumCircuit:
     """
     init_state: list of qubit positions that should have value 1 (apply X). By default all 0.
     paulis: list of Pauli strings, applied left to right
+    params: list of angles by which to rotate each exponentiated Pauli, leave empty to fill with parameters for optimisation in VQE
     rots: list of rotations from CS-VQE, applied left to right
     """
-    #parameters to be optimised in VQE routine
-    param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
-
-    params = [] 
-    for comb in list(itertools.combinations(param_chars, 3)):
-        char_str = ''.join(comb)
-        params.append(char_str)
+    if params == []:
+        #parameters to be optimised in VQE routine
+        param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
+        params = [] 
+        for comb in list(itertools.combinations(param_chars, 3)):
+            char_str = ''.join(comb)
+            params.append(Parameter(char_str))
 
     #initiate quantum state (usually Hartree Fock)
-    circ = QuantumCircuit(len(paulis[0]))
-    
-    for q in init_state:
-        circ.x(q)
-    
+    if circ is None:
+        circ = QuantumCircuit(len(paulis[0]))
+        for q in init_state:
+            circ.x(q)
+
     #applies the ansatz
     for index, p in enumerate(paulis):
-        circ += exp_P(p, Parameter(params[index]))
+        circ += exp_P(p_string = p, rot = params[index])
     
     #rotates in accordance with CS-VQE routine
     for r in rots:
-        circ += exp_P(r[1], r[0])
+        circ += exp_P(p_string = r[1], rot = r[0])
       
     return circ
 
