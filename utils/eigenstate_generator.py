@@ -6,6 +6,7 @@ import numpy as np
 from openfermion.linalg import LinearQubitOperator
 from openfermion.ops import FermionOperator, QubitOperator
 import utils.cs_vqe as c
+import utils.qubit_conversion as qonvert
 
 
 def bin_to_int(bits):
@@ -28,7 +29,7 @@ def int_to_bin(integer, num_qubits):
     return leading_0 + bin_str
 
 
-def A_action(molecule, num_qubits, basis_index):
+def A_action(molecule, num_qubits, basis_index, rot=False):
     """This will be computed programmatically from A operator in the future***
     """
     B = list(itertools.product([0,1], repeat=num_qubits))
@@ -43,22 +44,27 @@ def A_action(molecule, num_qubits, basis_index):
         Z_loc  = b1[5]
         
     elif molecule == 'HeH+':
-        b2[0] = (b2[0]+1)%2
-        b2[6] = (b2[6]+1)%2
-        i2 = bin_to_int(b2)
-        parity = 1+sum(b1)
-        Z_loc  = b1[6]
-        
+        if not rot:
+            b2[0] = (b2[0]+1)%2
+            b2[6] = (b2[6]+1)%2
+            i2 = bin_to_int(b2)
+            parity = 1+sum(b1)
+            Z_loc  = b1[6]
+        else:
+            b2[6] = (b2[6]+1)%2
+            i2 = bin_to_int(b2)
+            parity = b1[1]+b1[2]+b1[3]+b1[4]+b1[5]
+            Z_loc  = b1[6]
     else:
         raise ValueError('Molecule is not recognised.')
     
     return i1, i2, parity, Z_loc
 
 
-def add_eigenstate(molecule, r1, r2, index, num_qubits, theta=0, custom_amp=None):
+def add_eigenstate(molecule, r1, r2, index, num_qubits, theta=0, custom_amp=None, rot=False):
     """
     """
-    i1, i2, parity, Z_loc = A_action(molecule, num_qubits, index)
+    i1, i2, parity, Z_loc = A_action(molecule, num_qubits, index, rot)
     amp_ratio = (1 + r2 * (-1)**Z_loc) / (r1 * (-1)**(parity))
     t = np.arctan(amp_ratio)
     #print(q4, t)
@@ -144,12 +150,12 @@ def rotate_hamiltonian(rotations, ham, ham_noncon, ham_context):
     return rot_ham, rot_ham_noncon, rot_ham_context
 
 
-def rotate_state(rotations, state):
+def rotate_state(rotations, state, num_qubits):
     
     rot_state = deepcopy(state)
     
     for r in rotations:
-        r_op = QubitOperator('', 1/np.sqrt(2)) - q_conv.dict_to_QubitOperator({r[1]: 1/np.sqrt(2)*1j}, num_qubits)
+        r_op = QubitOperator('', 1/np.sqrt(2)) - qonvert.dict_to_QubitOperator({r[1]: 1/np.sqrt(2)*1j}, num_qubits)
         r_op = LinearQubitOperator(r_op, num_qubits)
         rot_state = r_op.matvec(rot_state)
         
@@ -161,18 +167,18 @@ def powerset(iterable):
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
-def qubit_map(molecule, num_qubits):
+def qubit_map(molecule, num_qubits, rot=False):
     qubit_map={}
     B = list(itertools.product([0,1], repeat=num_qubits))
     for i in range(2**(num_qubits)):
-        i1, i2 = A_action(molecule, num_qubits, i)[0:2]
+        i1, i2 = A_action(molecule, num_qubits, i, rot)[0:2]
         b1 = int_to_bin(i1, num_qubits)
         b2 = int_to_bin(i2, num_qubits)
         qubit_map[i1] = [(i1, b1), (i2, b2)]
     return qubit_map
 
 
-def find_eigenstate_indices(initial, removed_Z_indices, include_complement=False, num_qubits = None, molecule=None):
+def find_eigenstate_indices(initial, removed_Z_indices, include_complement=False, num_qubits = None, molecule=None, rot=False):
     indices = []
     index_powerset = list(powerset(removed_Z_indices))
     
@@ -186,7 +192,7 @@ def find_eigenstate_indices(initial, removed_Z_indices, include_complement=False
     if include_complement:
         indices_ref = deepcopy(indices)
         for i in indices_ref:
-            maps_to = A_action(molecule, num_qubits, basis_index=i)[1]
+            maps_to = A_action(molecule, num_qubits, basis_index=i, rot=rot)[1]
             indices.append(maps_to)
             
     return indices
@@ -207,17 +213,17 @@ def random_complex_unit():
         return x + y*1j
     
 def expectation_optimiser(molecule, ham_n, ham_c, r1, r2, amps, initial_state, 
-                          Z_indices, num_qubits, rotations=None, include_complement = False):
+                          Z_indices, num_qubits, rotations=None, include_complement = False, rot = False):
     """
     """
-    eigenstate_indices = find_eigenstate_indices(initial_state, Z_indices, include_complement, num_qubits, molecule)
-    
+    eigenstate_indices = find_eigenstate_indices(initial_state, Z_indices, include_complement, num_qubits, molecule, rot)
+
     psi = np.array([0 for i in range(2**num_qubits)], dtype=complex)
     for index, i in enumerate(eigenstate_indices):
-        psi += (amps[index])*add_eigenstate(molecule=molecule, r1=r1, r2=r2, theta=0, index=i, num_qubits=num_qubits)
+        psi += (amps[index])*add_eigenstate(molecule=molecule, r1=r1, r2=r2, theta=0, index=i, num_qubits=num_qubits, rot=rot)
     
     if rotations is not None:
-        psi = rotate_state(rotations, psi)
+        psi = rotate_state(rotations, psi, num_qubits)
     
     expect_noncon = expectation(ham_n, psi, num_qubits)
     expect_context = expectation(ham_c, psi, num_qubits)
