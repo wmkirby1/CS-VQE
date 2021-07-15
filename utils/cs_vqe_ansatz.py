@@ -158,6 +158,8 @@ def exp_P(p_string, control=None, circ=None, rot=0):
         non_I = list(range(num_qubits))
         num_Z = range(num_qubits - 1)
     
+    non_I = sorted(non_I)
+    
     #cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:
         circ.cx(non_I[i], non_I[i+1])
@@ -197,7 +199,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     return circ
 
 
-def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None) -> QuantumCircuit:
+def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None, trot_order=1) -> QuantumCircuit:
     """
     init_state: list of qubit positions that should have value 1 (apply X). By default all 0.
     paulis: list of Pauli strings, applied left to right
@@ -219,8 +221,10 @@ def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None) ->
             circ.x(q)
 
     #applies the ansatz
-    for index, p in enumerate(paulis):
-        circ += exp_P(p_string = p, rot = params[index])
+    for t in range(trot_order):
+        for index, p in enumerate(paulis):
+            t_index = t*len(paulis) + index
+            circ += exp_P(p_string = p, rot = params[index]/trot_order)
     
     #rotates in accordance with CS-VQE routine
     for r in rots:
