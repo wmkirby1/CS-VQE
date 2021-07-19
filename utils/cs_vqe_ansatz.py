@@ -224,7 +224,7 @@ def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
     for t in range(trot_order):
         for index, p in enumerate(paulis):
             t_index = t*len(paulis) + index
-            circ += exp_P(p_string = p, rot = params[index]/trot_order)
+            circ += exp_P(p_string = p, rot = params[t_index]/trot_order)
     
     #rotates in accordance with CS-VQE routine
     for r in rots:
