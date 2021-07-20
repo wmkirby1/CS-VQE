@@ -18,7 +18,7 @@ def QubitOperator_to_dict(op, num_qubits):
          
     return op_dict
 
-def dict_to_QubitOperator(op, num_qubits):
+def dict_to_QubitOperator(op):
     assert(type(op) == dict)
     p_strings = list(op.keys())
     out = QubitOperator()
