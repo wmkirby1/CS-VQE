@@ -82,6 +82,8 @@ def add_eigenstate(molecule, r1, r2, index, num_qubits, theta=0, custom_amp=None
 
 
 def expectation(op, state, num_qubits):
+    assert(type(op)==QubitOperator)
+    
     state = np.array(state)
     conj_state = np.conjugate(state)
     O = LinearQubitOperator(op, num_qubits)
