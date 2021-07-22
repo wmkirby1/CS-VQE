@@ -3,6 +3,7 @@ from qiskit.quantum_info.operators.symplectic.pauli import Pauli
 from qiskit.aqua.operators.legacy import WeightedPauliOperator
 from qiskit.opflow.primitive_ops import PauliOp
 
+
 def QubitOperator_to_dict(op, num_qubits):
     assert(type(op) == QubitOperator)
     op_dict = {}
