@@ -5,8 +5,8 @@ import math
 import numpy as np
 from openfermion.linalg import LinearQubitOperator
 from openfermion.ops import FermionOperator, QubitOperator
-import utils.cs_vqe as c
-import utils.qubit_conversion as qonvert
+import utils.cs_vqe_tools as c
+import utils.qonversion_tools as qonvert
 
 
 def bin_to_int(bits):
