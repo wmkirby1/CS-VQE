@@ -31,7 +31,7 @@ def powerset(iterable):
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
-def unconstrain_bits(initial, removed_Z_indices, include_complement=False, num_qubits = None, molecule=None, rot=False):
+def unconstrain(initial, removed_Z_indices):
     indices = []
     index_powerset = list(powerset(removed_Z_indices))
     

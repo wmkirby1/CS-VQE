@@ -2,23 +2,40 @@ from qiskit import QuantumCircuit
 
 
 def exp_P(p_string, control=None, circ=None, rot=0):
-    
+    """Exponentiate a Pauli string given a rotation
+
+    Parameters
+    ----------
+    p_string: str
+        Pauli string P to be exponentiated
+    control: int optional
+        specified control qubit
+    circ: QuantumCircuit
+        Append gates to an existing QuantumCircuit
+    rot: float optional
+        the rotation r in e^(irP)
+
+    Returns
+    -------
+    QuantumCircuit
+    """
     num_qubits = len(p_string)
     
-    #index X, Y, Z in the string of Paulis
+    # index X, Y, Z in the string of Paulis
     p_index = {}
     for index, p in enumerate(p_string):
+        q_pos = num_qubits-1-index
         if p not in p_index:
-            p_index[p] = [index]
+            p_index[p] = [q_pos]
         else:
-            p_index[p] += [index]
+            p_index[p] += [q_pos]
 
-    #initiate quantum circuit object
+    # initiate quantum circuit object
     if circ is None:
         circ = QuantumCircuit(num_qubits)
         circ.barrier()
     
-    #Rotate X and Y Paulis into Z basis
+    # rotate X and Y Paulis into Z basis
     for q in p_index.keys():
         if q == 'X':
             #rotate X to Z
@@ -36,7 +53,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
         else:
             pass
     
-    #Evaluate parity of remaining Z qubits
+    # evaluate parity of remaining Z qubits
     if 'I' in p_index:
         #return blank circuit if all qubits are identity
         if p_index['I'] == list(range(num_qubits)):
@@ -51,23 +68,21 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     
     non_I = sorted(non_I)
     
-    #cascade of CNOT gates between adjacent non-identity qubits
+    # cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:
         circ.cx(non_I[i], non_I[i+1])
     
-    #apply the rotation
+    # apply the rotation
     if control is None:
         circ.rz(2*rot, non_I[-1])
     else:
         circ.crz(2*rot, control, non_I[-1])
         
-    #reverse cascade of CNOT gates between adjacent non-identity qubits
+    # reverse cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:
         circ.cx(non_I[len(num_Z)-i-1], non_I[len(num_Z)-i])
         
-    #circ.barrier()
-    
-    #Rotate X and Y Paulis into Z basis
+    # rotate X and Y Paulis into Z basis
     for q in p_index.keys():
         if q == 'X':
             #rotate X to Z
@@ -90,15 +105,27 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     return circ
 
 
-def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None, trot_order=1) -> QuantumCircuit:
+def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, trot_order=1):
+    """Exponentiate a list of Pauli operators and trotterize
+
+    Paramaters
+    ----------
+    init_state: list optional
+        qubit positions that should have value 1 (apply X). By default all 0.
+    paulis: list optional
+        Pauli strings, applied left to right
+    params: list optional
+        angles by which to rotate each exponentiated Pauli, leave empty to fill with parameters for optimisation in VQE
+    rots: list optional
+        rotations from CS-VQE, applied left to right
+
+    Returns
+    -------
+    QuantumCircuit
     """
-    init_state: list of qubit positions that should have value 1 (apply X). By default all 0.
-    paulis: list of Pauli strings, applied left to right
-    params: list of angles by which to rotate each exponentiated Pauli, leave empty to fill with parameters for optimisation in VQE
-    rots: list of rotations from CS-VQE, applied left to right
-    """
+    
+    # parameters to be optimised in VQE routine
     if params == []:
-        #parameters to be optimised in VQE routine
         param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
         params = [] 
         for comb in list(itertools.combinations(param_chars, 3)):
@@ -111,13 +138,14 @@ def construct_ansatz(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
         for q in init_state:
             circ.x(q)
 
-    #applies the ansatz
+    # applies the ansatz 
+    # ***check whether parameters should be duplicated in circuit copies***
     for t in range(trot_order):
         for index, p in enumerate(paulis):
             t_index = t*len(paulis) + index
             circ += exp_P(p_string = p, rot = params[t_index]/trot_order)
     
-    #rotates in accordance with CS-VQE routine
+    # rotates in accordance with CS-VQE routine
     for r in rots:
         circ += exp_P(p_string = r[1], rot = r[0])
       

@@ -33,6 +33,39 @@ from datetime import datetime
 from datetime import timedelta
 from copy import deepcopy
 
+
+def ontic_prob(ep_state, ontic_state):
+    
+    if ep_state[0] != ontic_state[0]:
+        return 0
+    
+    else:
+        prod = 1
+        for index, r in enumerate(ep_state[1]):
+            f = 1/2 * abs(r + ontic_state[1][index])
+            prod *= f
+        
+        return prod 
+
+
+def discard_generator(ham_noncon, ham_context, generators):
+    new_ham_noncon = deepcopy(ham_noncon)
+    new_ham_context = deepcopy(ham_context)
+    
+    Z_indices = [g.index('Z') for g in generators]
+    removed=[]
+    
+    for index in Z_indices:
+        for p in ham_noncon:
+            if p not in removed:
+                if p[index] == 'Z':
+                    new_ham_context[p] = ham_noncon[p]
+                    del new_ham_noncon[p]
+                    removed.append(p)
+            
+    return new_ham_noncon, new_ham_context
+    
+
 # Takes two Pauli operators specified as strings (e.g., 'XIZYZ') and determines whether they commute:
 def commute(x,y):
     assert len(x)==len(y), print(x,y)
@@ -525,6 +558,23 @@ def apply_rotation(rotation,p):
             out[p] = 1.
     
     return out
+
+
+def rotate_operator(rotations, op):
+    rot_op = {}
+    
+    for p in op.keys():
+        p_ref = deepcopy(p) # this has no purpose **check**
+        parity = 1
+        coeff = op[p]
+        for r in rotations:
+            rotate_p = apply_rotation(r, p)
+            p = list(rotate_p.keys())[0]
+            parity *= rotate_p[p]
+        
+        rot_op[p] = parity * coeff
+        
+    return rot_op
 
 # For a Pauli operator P (specified as a string),
 # returns the matrix representation of P as a scipy.sparse.csr_matrix object.

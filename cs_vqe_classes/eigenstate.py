@@ -60,7 +60,7 @@ class eigenstate:
         init_state = int_to_bin(self.n, self.num_qubits)
         
         # compute the parities of relevant qubit subsets
-        sgn  = (-1)**(parity(init_state, P_index['X1'] + P_index['Y1']) + len(P_index['Y1'])/2)
+        sgn  = (-1)**(parity(init_state, P_index['Z1'] + P_index['Y1']) + len(P_index['Y1'])/2) # check the initial minus
         # calculate the quotient constraint on +1-eigenstates of A
         quotient = r1 / (1 - r2*(-1)**(parity(init_state, P_index['Z2'])))
         # define t such that |psi_n> := sin(t)|b_n> + cos(t)|b_n'> is a +1-eigenstate of A
@@ -85,7 +85,7 @@ class eigenstate:
         # binary representation of the eigenstate index
         init_state = int_to_bin(self.n, self.num_qubits)
         # determine the index of the basis vector that is paired with the initial state
-        n_prime    = self.n + sum([((-1)**int(init_state[i])) * 2**i for i in P_index['X1'] + P_index['Y1']])
+        n_prime    = self.n + sum([((-1)**int(init_state[i])) * 2**(self.num_qubits - i - 1) for i in P_index['X1'] + P_index['Y1']])
         
         # corresponding entries in psi are set as necessary
         psi[self.n]  = np.sin(t)

@@ -1,9 +1,9 @@
-import utils.cs_vqe as c
-import utils.eigenstate_generator as eig
-import utils.cs_vqe_ansatz as c_anz
-import utils.qubit_conversion as qonvert
+import utils.cs_vqe_tools as c
+import utils.qonversion_tools as qonvert
+from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
 import numpy as np
 import itertools
+import matplotlib.pyplot as plt
 
 class cs_vqe:
     """Class for constructing instances of CS-VQE Hamiltonians
@@ -43,6 +43,10 @@ class cs_vqe:
         Manually remove generators and all operators in their support from noncontextual to contextual Hamiltonian
     reduced_hamiltonian
         Generate the contextual subspace Hamiltonians for a given number of qubits
+    true_gs
+        Obtain true ground state via linear algebra (inefficient)
+    true_gs_hist
+        Plot histogram of basis state probability weightings in true ground state
     init_state
         Determing the reference state of the ansatz
     """
@@ -51,6 +55,7 @@ class cs_vqe:
         self.ham = ham
         self.terms_noncon = terms_noncon
         self.num_qubits = num_qubits
+
 
     # required for the following methods - use get_ham to retrieve hamiltonians in practice
     def ham_noncon(self):
@@ -73,15 +78,18 @@ class cs_vqe:
         """
         return c.find_gs_noncon(self.ham_noncon())
     
+
     def gs_noncon_energy(self):
         """Noncontextual ground state energy
         """
         return (self.gs_noncon())[0]
 
+
     def ep_state(self):
         """Noncontextual ground state parameter setting
         """
         return (self.gs_noncon())[1]
+
 
     def ep_dist(self):
         """Probability distribution corresponding with the epistemic state
@@ -100,7 +108,7 @@ class cs_vqe:
         
         for o in ontic_states:
             o_state = [list(o[0:size_G]), list(o[size_G:size_R])]
-            o_prob = c_anz.ontic_prob(ep, o_state)
+            o_prob = c.ontic_prob(ep, o_state)
             
             if o_prob != 0:
                 ep_prob[o] = o_prob
@@ -116,6 +124,7 @@ class cs_vqe:
         """
         return c.quasi_model(self.ham_noncon())
 
+
     def fn_form(self):
         """
 
@@ -123,6 +132,7 @@ class cs_vqe:
         -------
         """
         return c.energy_function_form(self.ham_noncon(), self.model())
+
 
     def rotations(self):
         """Determine necessary rotations such the commuting noncontextual generators consist of single Pauli Z
@@ -159,7 +169,7 @@ class cs_vqe:
             raise ValueError('Invalid value given for h_type: must be full, noncon or context')
         
         if rot:
-            ham_ref = eig.rotate_operator(self.rotations(), ham_ref)    
+            ham_ref = c.rotate_operator(self.rotations(), ham_ref)    
         
         return ham_ref
 
@@ -185,8 +195,8 @@ class cs_vqe:
         A_obsrv = {Ci1:ep[1][index] for index, Ci1 in enumerate(mod[1])}
 
         if rot:
-            G_list  = eig.rotate_operator(self.rotations(), G_list)
-            A_obsrv = eig.rotate_operator(self.rotations(), A_obsrv)
+            G_list  = c.rotate_operator(self.rotations(), G_list)
+            A_obsrv = c.rotate_operator(self.rotations(), A_obsrv)
 
         return G_list, A_obsrv
 
@@ -206,7 +216,7 @@ class cs_vqe:
         set 
             In form (new_ham_noncon, new_ham_context)
         """
-        return eig.discard_generator(self.get_ham(h_type='noncon',rot=rot), self.get_ham(h_type='context',rot=rot), rem_gen)
+        return c.discard_generator(self.get_ham(h_type='noncon',rot=rot), self.get_ham(h_type='context',rot=rot), rem_gen)
 
 
     def reduced_hamiltonian(self, order=None, sim_qubits=None):
@@ -233,6 +243,64 @@ class cs_vqe:
             return ham_red
         else:
             return ham_red[sim_qubits-1]
+
+
+    def true_gs(self, rot=False):
+        """Obtain true ground state via linear algebra (inefficient)
+
+        Parameters
+        ----------
+        rot: bool optional
+            Specifies either unrotated or rotated Hamiltonian
+
+        Returns
+        -------
+        list
+            (true gs energy, true gs eigenvector)
+        """
+        ham_q = qonvert.dict_to_QubitOperator(self.get_ham(rot=rot))
+        gs = get_ground_state(get_sparse_operator(ham_q, self.num_qubits).toarray())
+
+        return gs
+
+
+    def true_gs_hist(self, threshold, rot=False):
+        """Plot histogram of basis state probability weightings in true ground state
+
+        Parameters
+        ----------
+        threshold: float
+            minimum probability threshold to include in plot, i.e. 1e-n
+        rot: bool optional
+            Specifies either unrotated or rotated Hamiltonian
+
+        Returns
+        -------
+        Figure
+            histogram of probabilities
+        """
+        gs_vec = (self.true_gs(rot=rot))[1]
+
+        amp_list = [abs(a)**2 for a in list(gs_vec)]
+        sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > threshold], key=lambda x:x[1])
+        sig_amp_list.reverse()
+
+        XY = list(zip(*sig_amp_list))
+        X = XY[0]
+        Y = XY[1]
+        Y_log = [np.log10(a) for a in Y]
+
+        fig = plt.figure(figsize=(15, 6), dpi=300)
+
+        plt.grid(zorder=0)
+        plt.bar(X, Y, zorder=2, label='Probability of observing basis state')
+        plt.bar(X, Y_log, zorder=3, label = 'log (base 10) of probability')
+        plt.xticks(rotation=90)
+        plt.title('Probability weighting of basis states in the true ground state (above %s)' % str(threshold))
+        plt.xlabel('Basis state index')
+        plt.legend()
+
+        return fig
 
 
     # corresponds with the Hartree-Fock state
