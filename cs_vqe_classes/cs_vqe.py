@@ -219,7 +219,7 @@ class cs_vqe:
         return c.discard_generator(self.get_ham(h_type='noncon',rot=rot), self.get_ham(h_type='context',rot=rot), rem_gen)
 
 
-    def reduced_hamiltonian(self, order=None, sim_qubits=None):
+    def reduced_hamiltonian(self, order=None, num_sim_q=None):
         """Generate the contextual subspace Hamiltonians for a given number of qubits
         
         Parameters
@@ -239,10 +239,10 @@ class cs_vqe:
 
         ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order)
         
-        if sim_qubits is None:
+        if num_sim_q is None:
             return ham_red
         else:
-            return ham_red[sim_qubits-1]
+            return ham_red[num_sim_q-1]
 
 
     def true_gs(self, rot=False):

@@ -29,8 +29,13 @@ class eigenstate:
         self.num_qubits = num_qubits
 
 
-    def P_index(self):
+    def P_index(self, q_pos=False):
         """Indexes the qubit positions acted upon by each Pauli operator X, Y, Z
+
+        Parameters
+        ----------
+        q_pos: bool optional
+            indices of qubits so compatible with qiskit
 
         Returns
         -------
@@ -41,7 +46,11 @@ class eigenstate:
         for P in ['X', 'Y', 'Z']:
             for index, a in enumerate(self.A.keys()):
                 index_key = '%s%i' % (P, index+1)
-                P_index[index_key] = [index for index, p in enumerate(list(a)) if p==P]
+                offset = 0
+                if q_pos:
+                    offset = self.num_qubits-1
+                P_index[index_key] = [abs(index-offset) for index, p in enumerate(list(a)) if p==P]
+
         
         return P_index
 
@@ -85,7 +94,7 @@ class eigenstate:
         # binary representation of the eigenstate index
         init_state = int_to_bin(self.n, self.num_qubits)
         # determine the index of the basis vector that is paired with the initial state
-        n_prime    = self.n + sum([((-1)**int(init_state[i])) * 2**(self.num_qubits - i - 1) for i in P_index['X1'] + P_index['Y1']])
+        n_prime    = self.n + sum([((-1)**int(init_state[i])) * 2**(self.num_qubits-1 - i) for i in P_index['X1'] + P_index['Y1']])
         
         # corresponding entries in psi are set as necessary
         psi[self.n]  = np.sin(t)
