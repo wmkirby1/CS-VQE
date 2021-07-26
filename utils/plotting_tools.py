@@ -3,6 +3,7 @@ import itertools
 import matplotlib.pyplot as plt
 import cs_vqe_classes.cs_vqe_circuit as cs_circ
 from statistics import median
+from copy import deepcopy
 
 
 def factor_int(n):
@@ -18,11 +19,12 @@ def factor_int(n):
     return val, val2
 
 
-def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, order, max_sim_q):
+def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, order, max_sim_q, show_circ=False):
     rows, cols = factor_int(max_sim_q)
+
     fig, axs = plt.subplots(nrows = rows, ncols = cols, figsize = (6*cols,6*rows))
     if rows == 1:
-        grid_pos = range(max_sim_q)
+        grid_pos = range(cols)
     else:
         grid_pos = list(itertools.product(range(rows), range(cols)))
 
@@ -31,8 +33,10 @@ def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, or
     true_gs = circs.true_gs
 
     for index, grid in enumerate(grid_pos):
+
         num_sim_q = index+1
         vqe_result, target_energy, X, Y = circs.CS_VQE(anz_terms, num_sim_q)
+        print('Simulating %i out of %i qubits' % (num_sim_q, num_qubits), '| VQE result:', vqe_result)
 
         # plot results in corresponding subfigure
         l1 = axs[grid].plot(X, Y, color='black', zorder=2)
@@ -57,6 +61,10 @@ def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, or
             if t-0.01 < gs_noncon_energy:
                 X_zoom.append(X[index])
                 Y_zoom.append(t)
+
+        if X_zoom == []:
+            X_zoom.append(0)
+            Y_zoom.append(0)
 
         # location for the zoomed portion
         ax_box = axs[grid].get_position()

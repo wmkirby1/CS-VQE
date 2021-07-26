@@ -1,6 +1,7 @@
 import utils.cs_vqe_tools as c
 import utils.qonversion_tools as qonvert
 from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
+from copy import deepcopy
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
@@ -236,8 +237,9 @@ class cs_vqe:
         """
         if order is None:
             order = list(range(self.num_qubits))
+        order_ref = deepcopy(order)
 
-        ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order)
+        ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order_ref)
         
         if num_sim_q is None:
             return ham_red

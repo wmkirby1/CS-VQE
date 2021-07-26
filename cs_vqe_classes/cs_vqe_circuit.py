@@ -5,6 +5,7 @@ import utils.cs_vqe_tools as c_tools
 import utils.circuit_tools as circ
 import utils.qonversion_tools as qonvert
 from copy import deepcopy
+import numpy as np
 
 from qiskit.circuit.parameter import Parameter
 from qiskit.circuit.quantumcircuit import QuantumCircuit
@@ -41,7 +42,7 @@ class cs_vqe_circuit():
         # +1-eigenstate parameters
         eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
         self.index_paulis = eig.P_index(q_pos=True)
-        self.t = eig.t_val()
+        self.t1, self.t2 = eig.t_val(alt=True)
 
 
     def sim_qubits(self, num_sim_q, complement=False):
@@ -90,10 +91,10 @@ class cs_vqe_circuit():
         for p in anz_terms.keys():
             blank_op = ['I' for i in range(num_sim_q)]
             for i, sim_i in enumerate(self.sim_qubits(num_sim_q)[1]):
-                if sim_i != self.fixed_qubit:
-                    blank_op[i] = p[sim_i]
+                #if sim_i != 6:
+                blank_op[i] = p[sim_i]
             if set(blank_op) != {'I'}:
-                anz_terms_reduced.append('I'+''.join(blank_op))
+                anz_terms_reduced.append('II'+''.join(blank_op))
 
         return anz_terms_reduced
 
@@ -101,13 +102,13 @@ class cs_vqe_circuit():
     def build_circuit(self, anz_terms, num_sim_q, trot_order=2):
         """
         """
-        anz_terms = self.reduce_anz_terms(anz_terms, num_sim_q)
-        sim_qubits = self.sim_qubits(num_sim_q)[0]
+        anz_terms_reduced = self.reduce_anz_terms(anz_terms, num_sim_q)
+        sim_qubits, sim_indices = self.sim_qubits(num_sim_q)
         index_paulis_reduced = self.index_paulis_reduced(num_sim_q)
         lost_parity = self.lost_parity(num_sim_q)
-
-        qc = QuantumCircuit(num_sim_q+1)
-
+        qc = QuantumCircuit(num_sim_q+2)
+        q1_pos = num_sim_q - 1 - (sim_qubits).index(1)
+        
         # only applies for HeH+, needs to be generalised for init_state
         try:
             q4_pos = num_sim_q - 1 - (sim_qubits).index(4)
@@ -115,35 +116,55 @@ class cs_vqe_circuit():
         except:
             print('q4 not simulated')
 
-        if set(anz_terms) == {'II'} or anz_terms == []:
+        if set(anz_terms_reduced) == {'II'} or anz_terms_reduced == []:
             # because VQE requires at least one parameter...
-            qc.rz(Parameter('a'), 0)
+            qc.rz(Parameter('a'), q1_pos)
         else:
-            qc = circ.circ_from_paulis(paulis=set(anz_terms), circ=qc, trot_order=trot_order, dup_param=True)
+            qc = circ.circ_from_paulis(paulis=list(set(anz_terms_reduced)), circ=qc, trot_order=trot_order, dup_param=False)
         
+        qc.cx(q1_pos, num_sim_q)
+        qc.cry(2*abs(self.t2), num_sim_q, q1_pos)
+        qc.x(q1_pos), qc.x(num_sim_q)
+        qc.cry(2*abs(self.t1), num_sim_q, q1_pos)
+        qc.cx(num_sim_q, q1_pos)
+        
+        #qc.reset(num_sim_q)
+                
         if lost_parity:
-            qc.x(num_sim_q)
+            qc.x(num_sim_q+1)
             
         cascade_bits = []
         for i in index_paulis_reduced:
             cascade_bits.append(num_sim_q - 1 - sim_qubits.index(i))
 
         #store parity in ancilla qubit (8) via CNOT cascade
-        qc = circ.cascade(cascade_bits+[num_sim_q], circ=qc)
+        qc = circ.cascade(cascade_bits+[num_sim_q+1], circ=qc)
 
-        qc.x(0)
-        #move into +1-eigenstate
-        qc.cry(-2*self.t, num_sim_q, 0)
-        qc.x(num_sim_q)
-        qc.cry(2*self.t, num_sim_q, 0)
-        qc.x(num_sim_q)
+        qc.cz(num_sim_q+1, q1_pos)
 
         #reverse CNOT cascade
-        qc = circ.cascade(cascade_bits+[num_sim_q], circ=qc, reverse=True)
+        qc = circ.cascade(cascade_bits+[num_sim_q+1], circ=qc, reverse=True)
 
         if lost_parity:
-            qc.x(num_sim_q)
+            qc.x(num_sim_q+1)
 
+        qc.cx(num_sim_q, q1_pos)
+
+        qc.reset(num_sim_q)
+        qc.reset(num_sim_q+1)
+
+        #r1 = list(self.A.values())[0]
+        #r2 = list(self.A.values())[1]
+        #A_terms_reduced=[]
+        #for p in self.A.keys():
+        #    blank_op = ['I' for i in range(num_sim_q)]
+        #    for i, sim_i in enumerate(sim_indices):
+        #        blank_op[i] = p[sim_i]
+        #    A_terms_reduced.append('I'+''.join(blank_op))
+        #print(A_terms_reduced)
+        #qc = circ.circ_from_paulis(paulis=A_terms_reduced, params=[np.pi*r1/4, np.pi*r2/4], circ=qc, trot_order=4)
+        
+        #print(qc.draw())
         return qc
 
 
@@ -154,7 +175,7 @@ class cs_vqe_circuit():
         self.values.append(mean)
 
 
-    def CS_VQE(self, anz_terms, num_sim_q, optimizer=SLSQP(maxiter=1000)):
+    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=SLSQP(maxiter=10000)):
         """
         """
         self.counts.clear()
@@ -164,15 +185,18 @@ class cs_vqe_circuit():
         qc = self.build_circuit(anz_terms, num_sim_q)
         vqe = VQE(qc, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         
+        if ham is None:
+            ham = self.ham_reduced[num_sim_q-1]
+
         h_add_anc={}
         
-        for p in (self.ham_reduced[num_sim_q-1]).keys():
-            p_add_q = 'I' + p
-            h_add_anc[p_add_q] = self.ham_reduced[num_sim_q-1][p]
+        for p in ham.keys():
+            p_add_q = 'II' + p
+            h_add_anc[p_add_q] = ham[p]
 
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(h_add_anc)
         ham_red_q = qonvert.dict_to_QubitOperator(h_add_anc)
-        gs_red = get_ground_state(get_sparse_operator(ham_red_q, num_sim_q+1).toarray())
+        gs_red = get_ground_state(get_sparse_operator(ham_red_q, num_sim_q+2).toarray())
         target_energy = gs_red[0]
 
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)

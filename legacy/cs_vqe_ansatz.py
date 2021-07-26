@@ -30,7 +30,7 @@ from qiskit.providers.ibmq import IBMQBackend, least_busy
 from qiskit.tools.visualization import circuit_drawer
 from qiskit.providers.ibmq import least_busy
 from IPython.display import clear_output
-import utils.cs_vqe as c
+import utils.cs_vqe_tools as c
 import copy
 from qiskit.opflow import X, Z, I
 from qiskit.opflow.primitive_ops import PauliOp

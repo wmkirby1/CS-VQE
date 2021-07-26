@@ -55,7 +55,7 @@ class eigenstate:
         return P_index
 
 
-    def t_val(self):
+    def t_val(self, alt=False):
         """Calculates the eigenstate parameter t that satisfies the required amplitude constraint
 
         Returns
@@ -72,10 +72,15 @@ class eigenstate:
         sgn  = (-1)**(parity(init_state, P_index['Z1'] + P_index['Y1']) + len(P_index['Y1'])/2) # check the initial minus
         # calculate the quotient constraint on +1-eigenstates of A
         quotient = r1 / (1 - r2*(-1)**(parity(init_state, P_index['Z2'])))
+        alt_quotient = r1 / (1 - r2*(-1)**(1 + parity(init_state, P_index['Z2'])))
         # define t such that |psi_n> := sin(t)|b_n> + cos(t)|b_n'> is a +1-eigenstate of A
-        t = sgn * np.arctan(quotient)
+        t1 = sgn * np.arctan(quotient)
+        t2 = sgn * np.arctan(alt_quotient)
 
-        return t
+        if alt:
+            return t1, t2
+        else:
+            return t1
 
     
     def construct(self):
