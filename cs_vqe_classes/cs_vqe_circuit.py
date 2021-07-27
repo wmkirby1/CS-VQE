@@ -91,10 +91,10 @@ class cs_vqe_circuit():
         for p in anz_terms.keys():
             blank_op = ['I' for i in range(num_sim_q)]
             for i, sim_i in enumerate(self.sim_qubits(num_sim_q)[1]):
-                #if sim_i != 6:
-                blank_op[i] = p[sim_i]
+                if sim_i != 6:
+                    blank_op[i] = p[sim_i]
             if set(blank_op) != {'I'}:
-                anz_terms_reduced.append('II'+''.join(blank_op))
+                anz_terms_reduced.append('I'+''.join(blank_op))
 
         return anz_terms_reduced
 
@@ -106,7 +106,7 @@ class cs_vqe_circuit():
         sim_qubits, sim_indices = self.sim_qubits(num_sim_q)
         index_paulis_reduced = self.index_paulis_reduced(num_sim_q)
         lost_parity = self.lost_parity(num_sim_q)
-        qc = QuantumCircuit(num_sim_q+2)
+        qc = QuantumCircuit(num_sim_q+1)
         q1_pos = num_sim_q - 1 - (sim_qubits).index(1)
         
         # only applies for HeH+, needs to be generalised for init_state
@@ -122,36 +122,37 @@ class cs_vqe_circuit():
         else:
             qc = circ.circ_from_paulis(paulis=list(set(anz_terms_reduced)), circ=qc, trot_order=trot_order, dup_param=False)
         
-        qc.cx(q1_pos, num_sim_q)
-        qc.cry(2*abs(self.t2), num_sim_q, q1_pos)
-        qc.x(q1_pos), qc.x(num_sim_q)
-        qc.cry(2*abs(self.t1), num_sim_q, q1_pos)
-        qc.cx(num_sim_q, q1_pos)
+        qc.x(q1_pos)
+        #qc.cx(q1_pos, num_sim_q)
+        #qc.cry(2*abs(self.t2), num_sim_q, q1_pos)
+        #qc.x(q1_pos), qc.x(num_sim_q)
+        qc.ry(2*abs(self.t1), q1_pos)
+        #qc.cx(num_sim_q, q1_pos)
         
         #qc.reset(num_sim_q)
                 
         if lost_parity:
-            qc.x(num_sim_q+1)
+            qc.x(num_sim_q)
             
         cascade_bits = []
         for i in index_paulis_reduced:
             cascade_bits.append(num_sim_q - 1 - sim_qubits.index(i))
 
         #store parity in ancilla qubit (8) via CNOT cascade
-        qc = circ.cascade(cascade_bits+[num_sim_q+1], circ=qc)
+        qc = circ.cascade(cascade_bits+[num_sim_q], circ=qc)
 
-        qc.cz(num_sim_q+1, q1_pos)
+        qc.cz(num_sim_q, q1_pos)
 
         #reverse CNOT cascade
-        qc = circ.cascade(cascade_bits+[num_sim_q+1], circ=qc, reverse=True)
+        qc = circ.cascade(cascade_bits+[num_sim_q], circ=qc, reverse=True)
 
         if lost_parity:
-            qc.x(num_sim_q+1)
+            qc.x(num_sim_q)
 
-        qc.cx(num_sim_q, q1_pos)
+        #qc.cx(num_sim_q, q1_pos)
 
+        #qc.reset(num_sim_q)
         qc.reset(num_sim_q)
-        qc.reset(num_sim_q+1)
 
         #r1 = list(self.A.values())[0]
         #r2 = list(self.A.values())[1]
@@ -189,9 +190,8 @@ class cs_vqe_circuit():
             ham = self.ham_reduced[num_sim_q-1]
 
         h_add_anc={}
-        
         for p in ham.keys():
-            p_add_q = 'II' + p
+            p_add_q = 'I' + p
             h_add_anc[p_add_q] = ham[p]
 
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(h_add_anc)
