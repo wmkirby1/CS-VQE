@@ -19,8 +19,8 @@ def factor_int(n):
     return val, val2
 
 
-def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, order, max_sim_q, show_circ=False):
-    rows, cols = factor_int(max_sim_q)
+def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, order, max_sim_q, min_sim_q=0, show_circ=False):
+    rows, cols = factor_int(max_sim_q-min_sim_q)
 
     fig, axs = plt.subplots(nrows = rows, ncols = cols, figsize = (6*cols,6*rows))
     if rows == 1:
@@ -34,9 +34,10 @@ def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, or
 
     for index, grid in enumerate(grid_pos):
 
-        num_sim_q = index+1
+        num_sim_q = index+1+min_sim_q
+        print('Simulating %i out of %i qubits...' % (num_sim_q, num_qubits))
         vqe_result, target_energy, X, Y = circs.CS_VQE(anz_terms, num_sim_q)
-        print('Simulating %i out of %i qubits' % (num_sim_q, num_qubits), '| VQE result:', vqe_result)
+        print('VQE result:', vqe_result, '|', 'Target energy:', target_energy, '\n')
 
         # plot results in corresponding subfigure
         l1 = axs[grid].plot(X, Y, color='black', zorder=2)
@@ -48,7 +49,7 @@ def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, or
 
         
         axs[grid].set_xticks(X)
-        if index == num_qubits:
+        if num_sim_q == num_qubits:
             axs[grid].set_title("Full VQE")
         else:  
             axs[grid].set_title("%i qubits + ancilla" % num_sim_q)
@@ -63,8 +64,8 @@ def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, or
                 Y_zoom.append(t)
 
         if X_zoom == []:
-            X_zoom.append(0)
-            Y_zoom.append(0)
+            X_zoom = [0, 1]
+            Y_zoom = [0, 0]
 
         # location for the zoomed portion
         ax_box = axs[grid].get_position()
@@ -82,23 +83,25 @@ def plot_cs_vqe_convergence(hamiltonian, terms_noncon, anz_terms, num_qubits, or
         sub_axes.hlines(target_energy, X_zoom[0], X_zoom[-1], color='purple', ls='--')
         sub_axes.text(x=median(X_zoom), y=target_energy-0.004, s= 'target = '+str(round(target_energy, 4)), size='small')
         # plotting the convergence value
-        sub_axes.hlines(vqe_result, X_zoom[0], X_zoom[-1], color='b', ls='--')
-        sub_axes.text(x=X_zoom[0], y=Y[-1]-0.004, s= 'min = '+str(round(Y[-1], 4)), size='small')
+        if vqe_result+0.1<gs_noncon_energy:
+            sub_axes.hlines(vqe_result, X_zoom[0], X_zoom[-1], color='b', ls='--')
+            sub_axes.text(x=X_zoom[0], y=vqe_result-0.004, s= 'min = '+str(round(Y[-1], 4)), size='small')
         
-        if rows != 1:
-            if grid[0] == 1:
-                axs[grid].set_xlabel('Optimisation count',fontsize=16)
-            if grid[1] == 0:
-                axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
-        else:
-            axs[grid].set_xlabel('Optimisation count',fontsize=16)
-            if grid == 0:
-                axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
-    
-    fig.legend([l1,l2,l3,l4,l5],
-            labels=['CS-VQE optimisation','Target Value','Convergence Value','Noncontextual ground state energy','True ground state energy'],
-            loc="lower center",   # Position of legend
-            borderaxespad=0.1,    # Small spacing around legend box
-            ncol=5)
+        fig.legend([l1,l2,l3,l4,l5],
+                labels=['CS-VQE optimisation','Target Value','Convergence Value','Noncontextual ground state energy','True ground state energy'],
+                loc="lower center",   # Position of legend
+                borderaxespad=0.1,    # Small spacing around legend box
+                ncol=5)
 
+    if rows != 1:
+        if grid[0] == 1:
+            axs[grid].set_xlabel('Optimisation count',fontsize=16)
+        if grid[1] == 0:
+            axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
+    else:
+        axs[grid].set_xlabel('Optimisation count',fontsize=16)
+        if grid == 0:
+            axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
+
+    
     return fig

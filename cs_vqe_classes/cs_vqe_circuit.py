@@ -9,8 +9,9 @@ import numpy as np
 
 from qiskit.circuit.parameter import Parameter
 from qiskit.circuit.quantumcircuit import QuantumCircuit
+from qiskit.circuit.library import TwoLocal
 from qiskit.utils import QuantumInstance
-from qiskit.aqua.components.optimizers import SLSQP, COBYLA
+from qiskit.aqua.components.optimizers import SLSQP, COBYLA, SPSA, AQGD
 from qiskit.algorithms import VQE
 from qiskit import Aer
 from openfermion.linalg import get_sparse_operator, get_ground_state
@@ -31,7 +32,8 @@ class cs_vqe_circuit():
         cs = cs_vqe(hamiltonian, terms_noncon, num_qubits)
         generators = cs.generators(rot=True)
         # defined here so only executed once instead of at each call
-        self.ham_reduced = cs.reduced_hamiltonian(order)
+        ordertemp=[6,0,1,2,3,4,5,7]
+        self.ham_reduced = cs.reduced_hamiltonian(ordertemp)
         self.gs_noncon_energy = cs.gs_noncon_energy()
         self.true_gs = cs.true_gs()[0]
         self.G = generators[0]
@@ -43,6 +45,7 @@ class cs_vqe_circuit():
         eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
         self.index_paulis = eig.P_index(q_pos=True)
         self.t1, self.t2 = eig.t_val(alt=True)
+        self.r1, self.r2 = self.A.values()
 
 
     def sim_qubits(self, num_sim_q, complement=False):
@@ -91,8 +94,8 @@ class cs_vqe_circuit():
         for p in anz_terms.keys():
             blank_op = ['I' for i in range(num_sim_q)]
             for i, sim_i in enumerate(self.sim_qubits(num_sim_q)[1]):
-                if sim_i != 6:
-                    blank_op[i] = p[sim_i]
+                #if sim_i != 6:
+                blank_op[i] = p[sim_i]
             if set(blank_op) != {'I'}:
                 anz_terms_reduced.append('I'+''.join(blank_op))
 
@@ -108,28 +111,37 @@ class cs_vqe_circuit():
         lost_parity = self.lost_parity(num_sim_q)
         qc = QuantumCircuit(num_sim_q+1)
         q1_pos = num_sim_q - 1 - (sim_qubits).index(1)
+        print('*Performing CS-VQE over the following qubit positions:', sim_qubits)
+        Q = self.r1/(1+self.r2)
+        #t2 = (1-self.r2)/self.r1
+
+        #for i in sim_qubits:
+        #    if i in [0,1,2,3]:
+        #        qc.x(num_sim_q - 1 - (sim_qubits).index(i))
         
         # only applies for HeH+, needs to be generalised for init_state
-        try:
-            q4_pos = num_sim_q - 1 - (sim_qubits).index(4)
-            qc.x(q4_pos)
-        except:
-            print('q4 not simulated')
+        #try:
+        #    q4_pos = num_sim_q - 1 - (sim_qubits).index(4)
+        #    qc.x(q4_pos)
+        #except:
+        #    print('q4 not simulated')
 
         if set(anz_terms_reduced) == {'II'} or anz_terms_reduced == []:
             # because VQE requires at least one parameter...
             qc.rz(Parameter('a'), q1_pos)
         else:
-            qc = circ.circ_from_paulis(paulis=list(set(anz_terms_reduced)), circ=qc, trot_order=trot_order, dup_param=False)
-        
-        qc.x(q1_pos)
+            #qc = circ.circ_from_paulis(paulis=list(set(anz_terms_reduced)), circ=qc, trot_order=trot_order, dup_param=False)
+            qc += TwoLocal(num_sim_q+1, 'ry', 'cx', 'linear', reps=2, insert_barriers=True)
+            #qc.reset(num_sim_q)
+
+        qc.cx(q1_pos, num_sim_q)
+        qc.cry(2*np.arctan(1/Q), num_sim_q, q1_pos)
+        qc.x(num_sim_q)
+        qc.cry(2*np.arctan(-Q), num_sim_q, q1_pos)
+        #qc.x(num_sim_q)
         #qc.cx(q1_pos, num_sim_q)
-        #qc.cry(2*abs(self.t2), num_sim_q, q1_pos)
-        #qc.x(q1_pos), qc.x(num_sim_q)
-        qc.ry(2*abs(self.t1), q1_pos)
-        #qc.cx(num_sim_q, q1_pos)
         
-        #qc.reset(num_sim_q)
+        qc.reset(num_sim_q)
                 
         if lost_parity:
             qc.x(num_sim_q)
@@ -142,7 +154,7 @@ class cs_vqe_circuit():
         qc = circ.cascade(cascade_bits+[num_sim_q], circ=qc)
 
         qc.cz(num_sim_q, q1_pos)
-
+        
         #reverse CNOT cascade
         qc = circ.cascade(cascade_bits+[num_sim_q], circ=qc, reverse=True)
 
@@ -152,7 +164,7 @@ class cs_vqe_circuit():
         #qc.cx(num_sim_q, q1_pos)
 
         #qc.reset(num_sim_q)
-        qc.reset(num_sim_q)
+        #qc.reset(num_sim_q)
 
         #r1 = list(self.A.values())[0]
         #r2 = list(self.A.values())[1]
@@ -196,7 +208,7 @@ class cs_vqe_circuit():
 
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(h_add_anc)
         ham_red_q = qonvert.dict_to_QubitOperator(h_add_anc)
-        gs_red = get_ground_state(get_sparse_operator(ham_red_q, num_sim_q+2).toarray())
+        gs_red = get_ground_state(get_sparse_operator(ham_red_q, num_sim_q+1).toarray())
         target_energy = gs_red[0]
 
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)

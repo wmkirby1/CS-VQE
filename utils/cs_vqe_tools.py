@@ -736,13 +736,13 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
     order_len = len(order)
     
     vals = list(vals)
-    
+
     # rectify order
     for i in range(len(order)):
         for j in range(i):
             if order[j] < order[i]:
                 order[i] -= 1
-    
+    #print('Initial order', order)
     out = []
     
     for k in range(order_len+1):
@@ -765,11 +765,11 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
             for i in range(n_q):
                 if d[i] == 'Z':
                     z_indices.append(i)
-        
+        #print('Z_indices:', z_indices, diagonal_set)
         ham_red = {}
     
         for t in ham_rotated.keys():
-        
+
             sgn = 1
         
             for j in range(len(diagonal_set)): # enforce diagonal generator's assigned values in diagonal basis
@@ -784,14 +784,16 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
                 t_red = ''
                 for i in range(n_q):
                     if not i in z_indices:
+                        #print(i)
                         t_red = t_red + t[i]
+                #print(t, t_red)
                 if t_red in ham_red.keys():
                     ham_red[t_red] = ham_red[t_red] + ham_rotated[t]*sgn
                 else:
                     ham_red[t_red] = ham_rotated[t]*sgn
 
         out.append(ham_red)
-
+        #print('order after', order)
         if order:
             # Drop a qubit:
             i = order[0]
