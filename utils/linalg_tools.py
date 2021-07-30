@@ -6,6 +6,21 @@ import numpy as np
 import math
 
 
+def factor_int(n):
+    """Finds factorisation of n closest to a square (for optimal plot layout)
+    """
+    val = math.ceil(math.sqrt(n))
+    val2 = int(n/val)
+    while val2 * val != float(n):
+        val -= 1
+        val2 = int(n/val)
+    # order the factors
+    if val > val2:
+        val, val2 = val2, val
+
+    return val, val2
+
+
 def random_vector(n):
     """
     """
