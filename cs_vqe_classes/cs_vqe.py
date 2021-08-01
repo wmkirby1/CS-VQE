@@ -172,8 +172,8 @@ class cs_vqe:
             raise ValueError('Invalid value given for h_type: must be full, noncon or context')
         
         if self.rot_G:
-            ham_ref = c.rotate_operator(self.rotations(), ham_ref)    
-        
+            ham_ref = c.rotate_operator(self.rotations(), ham_ref)
+
         return ham_ref
 
 

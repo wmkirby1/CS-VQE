@@ -30,24 +30,17 @@ class cs_vqe_circuit():
         self.num_qubits = num_qubits
         self.order = deepcopy(order)
         self.rot_G = rot_G
+        self.rot_A = rot_A
         # epistricted model and reduced Hamiltonian
         cs = cs_vqe(hamiltonian, terms_noncon, num_qubits, rot_G, rot_A)
         generators = cs.generators()
         # defined here so only executed once instead of at each call
-        ordertemp=[6,0,1,2,3,4,5,7]
+        ordertemp=[3,0,1,2,4,5]#[6,0,1,2,3,4,5,7,8,9,10,11]
         self.ham_reduced = cs.reduced_hamiltonian(ordertemp)
         self.gs_noncon_energy = cs.gs_noncon_energy()
         self.true_gs = cs.true_gs()[0]
         self.G = generators[0]
         self.A = generators[1]
-        
-        self.reference_qubits={}
-        for g in self.G.keys():
-            self.reference_qubits[num_qubits-1-g.find('Z')] = self.G[g]
-        if rot_A:
-            a = list(self.A.keys())[0]
-            self.reference_qubits[num_qubits-1-a.find('Z')] = self.A[a]
-
         self.rotations = cs.rotations()
         self.init_state = cs.init_state()
         self.fixed_qubit = list(self.A.keys())[0].find('X')
@@ -81,6 +74,34 @@ class cs_vqe_circuit():
         """
         P_indices = [q for q in self.index_paulis['Z1'] if q in self.sim_qubits(num_sim_q)[0]]
         return P_indices 
+
+    
+    def reference_state(self):
+        """
+        """
+        reference_bits={}
+
+        for g in self.G.keys():
+            reference_bits[self.num_qubits-1-g.find('Z')] = self.G[g]
+        if self.rot_A:
+            a = list(self.A.keys())[0]
+            reference_bits[self.num_qubits-1-a.find('Z')] = self.A[a]
+
+        return reference_bits
+
+    
+    def qubit_map(self, num_sim_q):
+        """
+        """
+        q_map={}
+        sim_qubits = self.sim_qubits(num_sim_q)[0]
+        for q in sim_qubits:
+            try:
+                q_map[q] = num_sim_q - 1 - (sim_qubits).index(q)
+            except:
+                pass    
+
+        return q_map
 
 
     def lost_parity(self, num_sim_q):
@@ -121,25 +142,23 @@ class cs_vqe_circuit():
         """
         anz_terms_reduced = self.reduce_anz_terms(anz_terms, num_sim_q)
         sim_qubits, sim_indices = self.sim_qubits(num_sim_q)
-        index_paulis_reduced = self.index_paulis_reduced(num_sim_q)
-        lost_parity = self.lost_parity(num_sim_q)
+        reference_state = self.reference_state()
+        q_map = self.qubit_map(num_sim_q)
         qc = QuantumCircuit(num_sim_q)
-        q1_pos = num_sim_q - 1 - (sim_qubits).index(1)
         print('*Performing CS-VQE over the following qubit positions:', sim_qubits)
         #Q = self.r1/(1+self.r2)
         #t2 = (1-self.r2)/self.r1        
    
         for q in sim_qubits:
-            q_pos = num_sim_q - 1 - (sim_qubits).index(q)
-            if self.reference_qubits[q] == -1:
-                qc.x(q_pos)
+            if reference_state[q] == -1:
+                qc.x(q_map[q])
 
         if set(anz_terms_reduced) == {'II'} or anz_terms_reduced == []:
             # because VQE requires at least one parameter...
-            qc.rz(Parameter('a'), q1_pos)
+            qc.rz(Parameter('a'), q_map[1])
         else:
             qc = circ.circ_from_paulis(paulis=list(set(anz_terms_reduced)), circ=qc, trot_order=trot_order, dup_param=False)
-            #qc += TwoLocal(num_sim_q+1, 'ry', 'cx', 'linear', reps=2, insert_barriers=True)
+            #qc += TwoLocal(num_sim_q, 'ry', 'cx', 'linear', reps=2, insert_barriers=True)
             #qc.reset(num_sim_q)
 
         #qc.x(q1_pos)
@@ -152,7 +171,9 @@ class cs_vqe_circuit():
         #qc.cx(q1_pos, num_sim_q)
         
         #qc.reset(num_sim_q)
-                
+        
+        #index_paulis_reduced = self.index_paulis_reduced(num_sim_q)
+        #lost_parity = self.lost_parity(num_sim_q)
         #if lost_parity:
         #    qc.x(num_sim_q)
             
@@ -187,7 +208,7 @@ class cs_vqe_circuit():
         #print(A_terms_reduced)
         #qc = circ.circ_from_paulis(paulis=A_terms_reduced, params=[np.pi*r1/4, np.pi*r2/4], circ=qc, trot_order=4)
         
-        print(qc.draw())
+        #print(qc.draw())
         return qc
 
 
