@@ -1,5 +1,11 @@
 from copy import deepcopy
-from itertools import chain, combinations
+from itertools import chain, combinations, product
+
+
+def binary_strings(N):
+    bins = product([0, 1], repeat=N)
+    bin_strings = [''.join([str(i) for i in b]) for b in bins]
+    return bin_strings
 
 
 def bin_to_int(bits):

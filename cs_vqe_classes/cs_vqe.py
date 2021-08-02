@@ -219,7 +219,7 @@ class cs_vqe:
         set 
             In form (new_ham_noncon, new_ham_context)
         """
-        return c.discard_generator(self.get_ham(h_type='noncon',rot=self.rot_G), self.get_ham(h_type='context',rot=self.rot_G), rem_gen)
+        return c.discard_generator(self.get_ham(h_type='noncon'), self.get_ham(h_type='context'), rem_gen)
 
 
     def reduced_hamiltonian(self, order=None, num_sim_q=None):
