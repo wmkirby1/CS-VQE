@@ -29,8 +29,13 @@ class eigenstate:
         self.num_qubits = num_qubits
 
 
-    def P_index(self):
+    def P_index(self, q_pos=False):
         """Indexes the qubit positions acted upon by each Pauli operator X, Y, Z
+
+        Parameters
+        ----------
+        q_pos: bool optional
+            indices of qubits so compatible with qiskit
 
         Returns
         -------
@@ -41,12 +46,16 @@ class eigenstate:
         for P in ['X', 'Y', 'Z']:
             for index, a in enumerate(self.A.keys()):
                 index_key = '%s%i' % (P, index+1)
-                P_index[index_key] = [index for index, p in enumerate(list(a)) if p==P]
+                offset = 0
+                if q_pos:
+                    offset = self.num_qubits-1
+                P_index[index_key] = [abs(index-offset) for index, p in enumerate(list(a)) if p==P]
+
         
         return P_index
 
 
-    def t_val(self):
+    def t_val(self, alt=False):
         """Calculates the eigenstate parameter t that satisfies the required amplitude constraint
 
         Returns
@@ -63,10 +72,15 @@ class eigenstate:
         sgn  = (-1)**(parity(init_state, P_index['Z1'] + P_index['Y1']) + len(P_index['Y1'])/2) # check the initial minus
         # calculate the quotient constraint on +1-eigenstates of A
         quotient = r1 / (1 - r2*(-1)**(parity(init_state, P_index['Z2'])))
+        alt_quotient = r1 / (1 - r2*(-1)**(1 + parity(init_state, P_index['Z2'])))
         # define t such that |psi_n> := sin(t)|b_n> + cos(t)|b_n'> is a +1-eigenstate of A
-        t = sgn * np.arctan(quotient)
+        t1 = sgn * np.arctan(quotient)
+        t2 = sgn * np.arctan(alt_quotient)
 
-        return t
+        if alt:
+            return t1, t2
+        else:
+            return t1
 
     
     def construct(self):
@@ -85,7 +99,7 @@ class eigenstate:
         # binary representation of the eigenstate index
         init_state = int_to_bin(self.n, self.num_qubits)
         # determine the index of the basis vector that is paired with the initial state
-        n_prime    = self.n + sum([((-1)**int(init_state[i])) * 2**(self.num_qubits - i - 1) for i in P_index['X1'] + P_index['Y1']])
+        n_prime    = self.n + sum([((-1)**int(init_state[i])) * 2**(self.num_qubits-1 - i) for i in P_index['X1'] + P_index['Y1']])
         
         # corresponding entries in psi are set as necessary
         psi[self.n]  = np.sin(t)

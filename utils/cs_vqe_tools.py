@@ -429,7 +429,7 @@ def find_gs_noncon(ham_noncon, method = 'differential_evolution', model = None, 
 # Returns the sequence of rotations to diagonalize the generators for a noncontextual ground state.
 # The rotations are represented as [angle, generator], where generator is a string representing a Pauli operator.
 # Additionally returns the diagonalized generators (GuA), and their values in the noncontextual ground state (ep_state_trans).
-def diagonalize_epistemic(model,fn_form,ep_state):
+def diagonalize_epistemic(model,fn_form,ep_state,rot_A=False):
     
     assert(len(ep_state[0]) == fn_form[0])
     assert(len(model[0]) == fn_form[0])
@@ -441,18 +441,23 @@ def diagonalize_epistemic(model,fn_form,ep_state):
     # if there are cliques...
     if fn_form[1] > 0:
         # rotations to map A to a single Pauli (to be applied on left)
-        """
-        for i in range(1,fn_form[1]):
-            theta = np.arctan2(ep_state[1][i],np.sqrt(sum([ep_state[1][j]**2 for j in range(i)])))
-            if i == 1 and ep_state[1][0] < 0:
-                theta = np.pi - theta
-            generator = pauli_mult(model[1][0],model[1][i])
-            sgn = generator[1].imag
-            rotations.append( [sgn*theta, generator[0]] )
-        """
-        # rotations to diagonalize G union with the new A
-        GuA = deepcopy(model[0])# + [model[1][0]])
-        ep_state_trans = deepcopy(ep_state[0])# + [1])
+        if rot_A:
+            for i in range(1,fn_form[1]):
+                theta = np.arctan2(ep_state[1][i],np.sqrt(sum([ep_state[1][j]**2 for j in range(i)])))
+                if i == 1 and ep_state[1][0] < 0:
+                    theta = np.pi - theta
+                generator = pauli_mult(model[1][0],model[1][i])
+                sgn = generator[1].imag
+                rotations.append( [sgn*theta, generator[0]] )
+
+            # rotations to diagonalize G union with the new A
+            GuA = deepcopy(model[0] + [model[1][0]])
+            ep_state_trans = deepcopy(ep_state[0] + [1])
+        
+        else:
+            # rotations to diagonalize G
+            GuA = deepcopy(model[0])# + [model[1][0]])
+            ep_state_trans = deepcopy(ep_state[0])# + [1])
     
     # if there are no cliques...
     else:
@@ -547,7 +552,7 @@ def apply_rotation(rotation,p):
     if not commute(rotation[1],p):
         if rotation[0] == 'pi/2':
             q = pauli_mult(rotation[1],p)
-            out[q[0]] = (-1j*q[1]).real #there is a mistake in original code here (wrong sign)
+            out[q[0]] = (1j*q[1]).real #there is a mistake in original code here (wrong sign)
     
         else:
             out[p] = np.cos(rotation[0])
@@ -561,20 +566,26 @@ def apply_rotation(rotation,p):
 
 
 def rotate_operator(rotations, op):
-    rot_op = {}
+
+    op_rotated=deepcopy(op)
+
+    for r in rotations: # rotate the full Hamiltonian to the basis with diagonal noncontextual generators
+        op_next = {}
+        for t in op_rotated.keys():
+            t_set_next = apply_rotation(r,t)
+            for t_next in t_set_next.keys():
+                if t_next in op_next.keys():
+                    op_next[t_next] = op_next[t_next] + t_set_next[t_next]*op_rotated[t]
+                else:
+                    op_next[t_next] = t_set_next[t_next]*op_rotated[t]
+        op_rotated = deepcopy(op_next)
     
-    for p in op.keys():
-        p_ref = deepcopy(p) # this has no purpose **check**
-        parity = 1
-        coeff = op[p]
-        for r in rotations:
-            rotate_p = apply_rotation(r, p)
-            p = list(rotate_p.keys())[0]
-            parity *= rotate_p[p]
-        
-        rot_op[p] = parity * coeff
-        
-    return rot_op
+    op_out={}
+    for t in op_rotated.keys():
+        if op_rotated[t] != 0:
+            op_out[t] = op_rotated[t]
+
+    return op_out
 
 # For a Pauli operator P (specified as a string),
 # returns the matrix representation of P as a scipy.sparse.csr_matrix object.
@@ -727,22 +738,26 @@ def exp_vals(fn_form,ep_state):
 # so the complete CS-VQE approximation is obtained by finding the ground state energy of each.
 # If order is shorter than the total number of qubits, only Hamiltonians up to the the number of qubits
 # reflected by order are returned.
-def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
+def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
 
-    rotations, diagonal_set, vals = diagonalize_epistemic(model,fn_form,ep_state)
-    
+    rotations, diagonal_set, vals = diagonalize_epistemic(model,fn_form,ep_state,rot_A)
+
+    if rot_A:
+        diagonal_set = diagonal_set[0:-1]
+        vals = vals[0:-1]
+    #print(diagonal_set, vals)
     n_q = len(diagonal_set[0])
     
     order_len = len(order)
     
     vals = list(vals)
-    
+
     # rectify order
     for i in range(len(order)):
         for j in range(i):
             if order[j] < order[i]:
                 order[i] -= 1
-    
+    #print('Initial order', order)
     out = []
     
     for k in range(order_len+1):
@@ -765,11 +780,11 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
             for i in range(n_q):
                 if d[i] == 'Z':
                     z_indices.append(i)
-        
+        #print('Z_indices:', z_indices, diagonal_set)
         ham_red = {}
     
         for t in ham_rotated.keys():
-        
+
             sgn = 1
         
             for j in range(len(diagonal_set)): # enforce diagonal generator's assigned values in diagonal basis
@@ -783,15 +798,17 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
                 # construct term in reduced Hilbert space
                 t_red = ''
                 for i in range(n_q):
-                    if not i in z_indices:
+                    if not i in z_indices:# and i != 6:
+                        #print(i)
                         t_red = t_red + t[i]
+                #print(t, t_red)
                 if t_red in ham_red.keys():
                     ham_red[t_red] = ham_red[t_red] + ham_rotated[t]*sgn
                 else:
                     ham_red[t_red] = ham_rotated[t]*sgn
 
         out.append(ham_red)
-
+        #print('order after', order)
         if order:
             # Drop a qubit:
             i = order[0]
@@ -799,6 +816,9 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order):
             diagonal_set = diagonal_set[:i]+diagonal_set[i+1:]
             vals = vals[:i]+vals[i+1:]
     
+    #if rot_A:
+    #    out = out[1:]
+
     return out
 
 

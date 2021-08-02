@@ -1,4 +1,26 @@
 from qiskit import QuantumCircuit
+from qiskit.circuit import Parameter
+import itertools
+
+# TODO update exp_P to use cascade function
+def cascade(q_index, num_qubits=None, circ=None, reverse=False):
+    cascade_bits = sorted(q_index)
+
+    if circ is None:
+        assert(num_qubits is not None)
+        circ = QuantumCircuit(num_qubits)
+    else:
+        num_qubits = circ.num_qubits
+
+    if reverse:
+        cascade_bits.reverse()
+        for q in range(len(cascade_bits)-1):
+            circ.cx(cascade_bits[q+1], cascade_bits[q])
+    else:
+        for q in range(len(cascade_bits)-1):
+            circ.cx(cascade_bits[q], cascade_bits[q+1])
+
+    return circ
 
 
 def exp_P(p_string, control=None, circ=None, rot=0):
@@ -105,7 +127,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     return circ
 
 
-def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, trot_order=1):
+def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, trot_order=1, dup_param=False):
     """Exponentiate a list of Pauli operators and trotterize
 
     Paramaters
@@ -142,8 +164,9 @@ def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
     # ***check whether parameters should be duplicated in circuit copies***
     for t in range(trot_order):
         for index, p in enumerate(paulis):
-            t_index = t*len(paulis) + index
-            circ += exp_P(p_string = p, rot = params[t_index]/trot_order)
+            if dup_param:
+                index = index + t*len(paulis)
+            circ += exp_P(p_string = p, rot = params[index]/trot_order)
     
     # rotates in accordance with CS-VQE routine
     for r in rots:

@@ -1,6 +1,7 @@
 import utils.cs_vqe_tools as c
 import utils.qonversion_tools as qonvert
 from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
+from copy import deepcopy
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
@@ -50,11 +51,13 @@ class cs_vqe:
     init_state
         Determing the reference state of the ansatz
     """
-    def __init__(self, ham, terms_noncon, num_qubits):
+    def __init__(self, ham, terms_noncon, num_qubits, rot_G=True, rot_A=False):
         assert(type(ham)==dict)
         self.ham = ham
         self.terms_noncon = terms_noncon
         self.num_qubits = num_qubits
+        self.rot_A = rot_A
+        self.rot_G = rot_G
 
 
     # required for the following methods - use get_ham to retrieve hamiltonians in practice
@@ -140,11 +143,11 @@ class cs_vqe:
         Returns
         -------
         """
-        return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state()))[0]
+        return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state(),rot_A=self.rot_A))[0]
 
 
     # get the noncontextual and contextual Hamiltonians
-    def get_ham(self, h_type='full', rot=False):
+    def get_ham(self, h_type='full'):
         """Retrieve full, noncontextual or contextual Hamiltonian with or without rotations applied
         
         Paramters
@@ -168,14 +171,14 @@ class cs_vqe:
         else:
             raise ValueError('Invalid value given for h_type: must be full, noncon or context')
         
-        if rot:
-            ham_ref = c.rotate_operator(self.rotations(), ham_ref)    
-        
+        if self.rot_G:
+            ham_ref = c.rotate_operator(self.rotations(), ham_ref)
+
         return ham_ref
 
 
     # get generators and observable A
-    def generators(self, rot=False):
+    def generators(self):
         """Retrieve commuting noncontextual generators and observable A with or without rotations applied
         
         Paramters
@@ -194,14 +197,14 @@ class cs_vqe:
         G_list  = {g:ep[0][index] for index, g in enumerate(mod[0])}
         A_obsrv = {Ci1:ep[1][index] for index, Ci1 in enumerate(mod[1])}
 
-        if rot:
+        if self.rot_G:
             G_list  = c.rotate_operator(self.rotations(), G_list)
             A_obsrv = c.rotate_operator(self.rotations(), A_obsrv)
 
         return G_list, A_obsrv
 
 
-    def move_generator(self, rem_gen, rot=False):
+    def move_generator(self, rem_gen):
         """Manually remove generators and all operators in their support from noncontextual to contextual Hamiltonian
         
         Paramters
@@ -216,10 +219,10 @@ class cs_vqe:
         set 
             In form (new_ham_noncon, new_ham_context)
         """
-        return c.discard_generator(self.get_ham(h_type='noncon',rot=rot), self.get_ham(h_type='context',rot=rot), rem_gen)
+        return c.discard_generator(self.get_ham(h_type='noncon'), self.get_ham(h_type='context'), rem_gen)
 
 
-    def reduced_hamiltonian(self, order=None, sim_qubits=None):
+    def reduced_hamiltonian(self, order=None, num_sim_q=None):
         """Generate the contextual subspace Hamiltonians for a given number of qubits
         
         Parameters
@@ -236,16 +239,17 @@ class cs_vqe:
         """
         if order is None:
             order = list(range(self.num_qubits))
-
-        ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order)
+        order_ref = deepcopy(order)
         
-        if sim_qubits is None:
+        ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order_ref,self.rot_A)
+        
+        if num_sim_q is None:
             return ham_red
         else:
-            return ham_red[sim_qubits-1]
+            return ham_red[num_sim_q-1]
 
 
-    def true_gs(self, rot=False):
+    def true_gs(self):
         """Obtain true ground state via linear algebra (inefficient)
 
         Parameters
@@ -258,13 +262,13 @@ class cs_vqe:
         list
             (true gs energy, true gs eigenvector)
         """
-        ham_q = qonvert.dict_to_QubitOperator(self.get_ham(rot=rot))
+        ham_q = qonvert.dict_to_QubitOperator(self.get_ham())
         gs = get_ground_state(get_sparse_operator(ham_q, self.num_qubits).toarray())
 
         return gs
 
 
-    def true_gs_hist(self, threshold, rot=False):
+    def true_gs_hist(self, threshold):
         """Plot histogram of basis state probability weightings in true ground state
 
         Parameters
@@ -279,7 +283,7 @@ class cs_vqe:
         Figure
             histogram of probabilities
         """
-        gs_vec = (self.true_gs(rot=rot))[1]
+        gs_vec = (self.true_gs(rot=self.rot_G))[1]
 
         amp_list = [abs(a)**2 for a in list(gs_vec)]
         sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > threshold], key=lambda x:x[1])
@@ -304,11 +308,11 @@ class cs_vqe:
 
 
     # corresponds with the Hartree-Fock state
-    def init_state(self, rot=True):
+    def init_state(self):
         """
         TODO - should work for non-rotated generators too
         """
-        G = self.generators(rot)[0]
+        G = self.generators()[0]
         zeroes = list(''.zfill(self.num_qubits))
         
         for g in G.keys():
