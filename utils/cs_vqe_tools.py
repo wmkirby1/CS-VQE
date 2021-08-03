@@ -453,7 +453,7 @@ def diagonalize_epistemic(model,fn_form,ep_state,rot_A=False):
             # rotations to diagonalize G union with the new A
             GuA = deepcopy(model[0] + [model[1][0]])
             ep_state_trans = deepcopy(ep_state[0] + [1])
-        
+
         else:
             # rotations to diagonalize G
             GuA = deepcopy(model[0])# + [model[1][0]])

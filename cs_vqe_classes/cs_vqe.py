@@ -137,14 +137,16 @@ class cs_vqe:
         return c.energy_function_form(self.ham_noncon(), self.model())
 
 
-    def rotations(self):
+    def rotations(self, rot_override=False):
         """Determine necessary rotations such the commuting noncontextual generators consist of single Pauli Z
 
         Returns
         -------
         """
-        return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state(),rot_A=self.rot_A))[0]
-
+        if not rot_override:
+            return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state(),rot_A=self.rot_A))[0]
+        else:
+            return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state(),rot_A=False))[0]
 
     # get the noncontextual and contextual Hamiltonians
     def get_ham(self, h_type='full'):
@@ -249,7 +251,7 @@ class cs_vqe:
             return ham_red[num_sim_q-1]
 
 
-    def true_gs(self):
+    def true_gs(self, rot_override=False):
         """Obtain true ground state via linear algebra (inefficient)
 
         Parameters
@@ -262,13 +264,17 @@ class cs_vqe:
         list
             (true gs energy, true gs eigenvector)
         """
-        ham_q = qonvert.dict_to_QubitOperator(self.get_ham())
+        if not rot_override:
+            ham_q = qonvert.dict_to_QubitOperator(self.get_ham())
+        else:
+            ham_q = qonvert.dict_to_QubitOperator(self.ham)
+            
         gs = get_ground_state(get_sparse_operator(ham_q, self.num_qubits).toarray())
 
         return gs
 
 
-    def true_gs_hist(self, threshold):
+    def true_gs_hist(self, threshold, rot_override=False):
         """Plot histogram of basis state probability weightings in true ground state
 
         Parameters
@@ -283,7 +289,7 @@ class cs_vqe:
         Figure
             histogram of probabilities
         """
-        gs_vec = (self.true_gs(rot=self.rot_G))[1]
+        gs_vec = (self.true_gs(rot_override))[1]
 
         amp_list = [abs(a)**2 for a in list(gs_vec)]
         sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > threshold], key=lambda x:x[1])

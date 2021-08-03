@@ -19,13 +19,19 @@ def factor_int(n):
     return val, val2
 
 
-def plot_cs_vqe_convergence(data):
+def plot_cs_vqe_convergence(data, title):
     """
     """
     fig, axs = plt.subplots(nrows = data['rows'], ncols = data['cols'], figsize = (6*data['cols'],6*data['rows']))
 
     for index, grid in enumerate(data['grid_pos']):
-        vqe_result = data[grid]
+        if type(grid) != tuple:
+            grid_ref = str(tuple(grid))
+            grid = tuple(map(int, grid_ref[1:-1].split(', ')))
+        else:
+            grid_ref = grid
+
+        vqe_result = data[grid_ref]
         
         X = vqe_result['counts']
         Y = vqe_result['values']
@@ -40,12 +46,12 @@ def plot_cs_vqe_convergence(data):
         l6 = axs[grid].plot([1], [0], color='pink', zorder=5, label='Chemical accuracy')
 
 
-        axs[grid].set_xticks(X)
+        #axs[grid].set_xticks(X)
         if vqe_result['num_sim_q'] == data['num_qubits']:
             axs[grid].set_title("Full VQE")
         else:  
             axs[grid].set_title("Simulating %i/%i qubits" % (vqe_result['num_sim_q'], data['num_qubits']))
-        axs[grid].set_xticklabels([])
+        #axs[grid].set_xticklabels([])
 
         # plotting zoomed portion of graph to observe convergence
         X_zoom = []
@@ -98,5 +104,7 @@ def plot_cs_vqe_convergence(data):
                 loc="lower center",   # Position of legend
                 borderaxespad=0.1,    # Small spacing around legend box
                 ncol=3)
+
+    fig.suptitle(title, fontsize=16)
     
     return fig
