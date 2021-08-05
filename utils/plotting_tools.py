@@ -44,7 +44,7 @@ def plot_cs_vqe_convergence(data, title):
         l4 = axs[grid].plot([1], [0], color='purple', ls='--', zorder=3, label='Target Value')
         l5 = axs[grid].plot([1], [0], color='b', ls='--', zorder=4, label='Convergence Value')
         l6 = axs[grid].plot([1], [0], color='pink', zorder=5, label='Chemical accuracy')
-
+        axs[grid].hlines(vqe_result['projected_target'], X[0], X[-1], color='orange', ls='--')
 
         #axs[grid].set_xticks(X)
         if vqe_result['num_sim_q'] == data['num_qubits']:
@@ -77,7 +77,7 @@ def plot_cs_vqe_convergence(data, title):
         # lines fixed at noncontextual ground energy and true ground energy
         sub_axes.hlines(data['gs_noncon_energy'], X_zoom[0], X_zoom[-1], color='r')
         sub_axes.hlines(data['true_gs'], X_zoom[0], X_zoom[-1], color='g')
-        sub_axes.hlines(data['true_gs']+0.0015, X_zoom[0], X_zoom[-1], color='pink')
+        sub_axes.hlines(data['true_gs']+0.0016, X_zoom[0], X_zoom[-1], color='pink')
         # plotting the target value given the number of qubits simulated
         sub_axes.hlines(vqe_result['target'], X_zoom[0], X_zoom[-1], color='purple', ls='--')
         sub_axes.text(x=median(X_zoom), y=vqe_result['target']-0.005, s= 'target = '+str(round(vqe_result['target'], 4)), size='small')
@@ -85,7 +85,8 @@ def plot_cs_vqe_convergence(data, title):
         if vqe_result['result']<data['gs_noncon_energy']+0.1:
             sub_axes.hlines(vqe_result['result'], X_zoom[0], X_zoom[-1], color='b', ls='--')
             sub_axes.text(x=X_zoom[0], y=vqe_result['result']-0.005, s= 'min = '+str(round(Y[-1], 4)), size='small')
-
+        sub_axes.hlines(vqe_result['projected_target'], X_zoom[0], X_zoom[-1], color='orange', ls='--')
+        
         if data['rows'] != 1:
             if grid[0] == 1:
                 axs[grid].set_xlabel('Optimisation count',fontsize=16)
