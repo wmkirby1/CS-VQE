@@ -45,6 +45,10 @@ def plot_cs_vqe_convergence(data, title):
         l5 = axs[grid].plot([1], [0], color='b', ls='--', zorder=4, label='Convergence Value')
         l6 = axs[grid].plot([1], [0], color='pink', zorder=5, label='Chemical accuracy')
         axs[grid].hlines(vqe_result['projected_target'], X[0], X[-1], color='orange', ls='--')
+        # expectation value of A
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        axs[grid].text(0.7, 0.45, '<ψ|A|ψ>='+str(round(vqe_result['A_expct'], 10)), transform = axs[grid].transAxes, bbox=props)
+
 
         #axs[grid].set_xticks(X)
         if vqe_result['num_sim_q'] == data['num_qubits']:
@@ -70,7 +74,7 @@ def plot_cs_vqe_convergence(data, title):
         ax_origin = (ax_box.get_points())[1]
         sf_size = 0.1
         sub_axes = plt.axes([ax_origin[0]-sf_size*1.1, ax_origin[1]-sf_size*1.4, sf_size*1.1, sf_size*1.4])
-
+        
         # plot the zoomed portion
         sub_axes.set_ylim((data['true_gs']-0.01, data['gs_noncon_energy']+0.01))
         sub_axes.plot(X_zoom, Y_zoom, color='black')
@@ -88,7 +92,7 @@ def plot_cs_vqe_convergence(data, title):
         sub_axes.hlines(vqe_result['projected_target'], X_zoom[0], X_zoom[-1], color='orange', ls='--')
         
         if data['rows'] != 1:
-            if grid[0] == 1:
+            if grid[0] == data['rows']-1:
                 axs[grid].set_xlabel('Optimisation count',fontsize=16)
             if grid[1] == 0:
                 axs[grid].set_ylabel('Energy (Ha)',fontsize=18)

@@ -39,6 +39,7 @@ class cs_vqe_circuit():
     """
     """
     # class variables for storing VQE results
+    cs_vqe_results = {}
     counts = []
     values = []
     # if True adds additional qubit to circuit
@@ -52,7 +53,7 @@ class cs_vqe_circuit():
 
         # epistricted model and reduced Hamiltonian
         cs = cs_vqe(hamiltonian, terms_noncon, num_qubits, rot_G, rot_A)
-        self.all_rotations = cs.rotations()
+        self.ham_rotations = cs.rotations()
         generators = cs.generators()
 
         # defined here so only executed once instead of at each call
@@ -249,14 +250,18 @@ class cs_vqe_circuit():
         qc.cx(num_sim_q, q_map[self.X_qubit])
 
 
-    def rot_G_block(self, qc, num_sim_q):
-        G_rot = self.reduce_rotations(self.G_rotations, num_sim_q)       
-        G_rot.reverse()
-        for p, r in G_rot:
-            qc = circ.exp_P(p, circ=qc, rot=-r)
+    def rot_ham_block(self, qc, num_sim_q, inverse=False):
+        ham_rot = self.reduce_rotations(self.ham_rotations, num_sim_q)
+        if inverse:
+            ham_rot.reverse()
+        for p, r in ham_rot:
+            if inverse:
+                qc = circ.exp_P(p, circ=qc, rot=-r)
+            else:
+                qc = circ.exp_P(p, circ=qc, rot=r)
 
 
-    def rot_A_block(self, qc, num_sim_q):
+    def rot_A_block(self, qc, num_sim_q, inverse=False):
         """
         """
         diag_A = []
@@ -283,9 +288,13 @@ class cs_vqe_circuit():
             diag_A.append(['pi/2', rot])
 
         A_rot = self.reduce_rotations(diag_A, num_sim_q)
-        #A_rot.reverse()
+        if inverse:
+            A_rot.reverse()
         for p, r in A_rot:
-            qc = circ.exp_P(p, circ=qc, rot=r)
+            if inverse:
+                qc = circ.exp_P(p, circ=qc, rot=-r)
+            else:
+                qc = circ.exp_P(p, circ=qc, rot=r)
 
 
     def A_eig_block(self, qc, num_sim_q):
@@ -352,13 +361,15 @@ class cs_vqe_circuit():
         
         self.ref_state_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
+        self.rot_ham_block(qc, num_sim_q)
+        self.rot_A_block(qc, num_sim_q, inverse=True)
         
         #qc.reset(q_map[self.X_qubit])
         
         self.swap_entgl_block(qc, num_sim_q)
-        #qc.x(q_map[self.X_qubit])
+        qc.x(q_map[self.X_qubit])
+
         self.rot_A_block(qc, num_sim_q)
-        
         
         #self.A_eig_block(qc, num_sim_q)
         #self.parity_cascade_block(qc, self.index_paulis['Z1'], num_sim_q)
@@ -473,19 +484,21 @@ class cs_vqe_circuit():
         else:
             grid_pos = list(itertools.product(range(rows), range(cols)))
 
-        cs_vqe_results = {'rows':rows, 
-                        'cols':cols,
-                        'grid_pos':grid_pos,
-                        'gs_noncon_energy':self.gs_noncon_energy, 
-                        'true_gs':self.true_gs, 
-                        'num_qubits':self.num_qubits}
+        self.cs_vqe_results = {'rows':rows, 
+                                'cols':cols,
+                                'grid_pos':grid_pos,
+                                'gs_noncon_energy':self.gs_noncon_energy, 
+                                'true_gs':self.true_gs, 
+                                'num_qubits':self.num_qubits}
 
         for index, grid in enumerate(grid_pos):
             num_sim_q = index+1+min_sim_q
             vqe_iters=[]
             for i in range(iters):
-                vqe_iters.append(self.CS_VQE(anz_terms, num_sim_q, check_A=check_A))
+                vqe_run = self.CS_VQE(anz_terms, num_sim_q, check_A=check_A)
+                vqe_iters.append(vqe_run)
+                if vqe_run['result']-vqe_run['projected_target'] < 1e-3:
+                    print('Reached target energy in fewer iterations than specified')
+                    break
             vqe_iters = sorted(vqe_iters, key=lambda x:x['result'])
-            cs_vqe_results[grid] = vqe_iters[0]
-        
-        return cs_vqe_results
+            self.cs_vqe_results[grid] = vqe_iters[0]
