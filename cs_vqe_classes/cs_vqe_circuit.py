@@ -42,6 +42,7 @@ class cs_vqe_circuit():
     cs_vqe_results = {}
     counts = []
     values = []
+    errors = []
     # if True adds additional qubit to circuit
     ancilla = False
     
@@ -384,6 +385,7 @@ class cs_vqe_circuit():
         """
         self.counts.append(eval_count)
         self.values.append(mean)
+        self.errors.append(std)
 
 
     def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=SLSQP(maxiter=500), check_A=False):
@@ -391,6 +393,7 @@ class cs_vqe_circuit():
         """
         self.counts.clear()
         self.values.clear()
+        self.errors.clear()
 
         init_anz_params = list(-p.imag for p in self.reduce_anz_terms(anz_terms, num_sim_q).values())
         if init_anz_params == []:
@@ -455,6 +458,7 @@ class cs_vqe_circuit():
 
         counts = deepcopy(self.counts)
         values = deepcopy(self.values)
+        errors = deepcopy(self.errors)
 
         # compute target energy for projected hamiltonian
         ham_mat = np.matrix(get_sparse_operator(input_ham_q, dim).toarray())
@@ -468,7 +472,8 @@ class cs_vqe_circuit():
                 'projected_target':proj_energy,
                 'A_expct':A_expct,
                 'counts':counts,
-                'values':values}
+                'values':values,
+                'errors':errors}
 
 
     def run_cs_vqe(self, anz_terms, max_sim_q, min_sim_q=0, iters=1, check_A=False):
