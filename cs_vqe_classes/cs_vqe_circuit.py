@@ -17,7 +17,7 @@ from qiskit.utils import QuantumInstance
 from qiskit.aqua.components.optimizers import SLSQP, COBYLA, SPSA, AQGD
 from qiskit.algorithms import VQE
 from qiskit import Aer
-from openfermion.linalg import get_sparse_operator, get_ground_state
+from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state
 
 import numpy as np
 import pylab
@@ -46,7 +46,11 @@ class cs_vqe_circuit():
     # if True adds additional qubit to circuit
     ancilla = False
     
-    def __init__(self, hamiltonian, terms_noncon, num_qubits, order=None, rot_G=True, rot_A=False):
+    def __init__(self, hamiltonian, terms_noncon, num_qubits, num_electrons, order=None, rot_G=True, rot_A=False):
+        for index, i in enumerate(jw_hartree_fock_state(num_electrons, num_qubits)):
+            if i == 1:
+                self.HF_config = bit.int_to_bin(index, num_qubits)
+        
         self.hamiltonian = hamiltonian
         self.num_qubits = num_qubits
         self.rot_G = rot_G
@@ -63,10 +67,13 @@ class cs_vqe_circuit():
         self.G = generators[0]
         self.A = generators[1] 
 
-        for p in self.A.keys():
-            if 'X' in list(p):
-                self.X_index = p.index('X')
-                self.X_qubit = num_qubits-1-self.X_index
+        if rot_A:
+            self.X_index = list(self.A.keys())[0].find('Z')
+        else:
+            for p in self.A.keys():
+                if 'X' in list(p):
+                    self.X_index = p.index('X')
+        self.X_qubit = num_qubits-1-self.X_index
 
         ham_noncon = {}
         for t in terms_noncon:
@@ -221,12 +228,12 @@ class cs_vqe_circuit():
         """
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
-        reference_state = self.reference_state(self.hamiltonian)
+        #reference_state = self.reference_state(self.hamiltonian)
         
         for q in sim_qubits:
-            if reference_state[q] == 1:
+            q_index = self.num_qubits-1-q
+            if self.HF_config[q_index] == '1':
                 qc.x(q_map[q])
-
 
     def anz_block(self, anz_terms, qc, num_sim_q):
         anz_terms_reduced = self.reduce_anz_terms(anz_terms, num_sim_q)
@@ -363,14 +370,18 @@ class cs_vqe_circuit():
         self.ref_state_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
         self.rot_ham_block(qc, num_sim_q)
-        self.rot_A_block(qc, num_sim_q, inverse=True)
+        #qc.reset(q_map[self.X_qubit])
+        #qc.x(q_map[self.X_qubit])
+
+        #self.rot_A_block(qc, num_sim_q, inverse=True)
         
         #qc.reset(q_map[self.X_qubit])
         
         self.swap_entgl_block(qc, num_sim_q)
-        qc.x(q_map[self.X_qubit])
+        if list(self.A.values())[0] == -1:
+            qc.x(q_map[self.X_qubit])
 
-        self.rot_A_block(qc, num_sim_q)
+        #self.rot_A_block(qc, num_sim_q)
         
         #self.A_eig_block(qc, num_sim_q)
         #self.parity_cascade_block(qc, self.index_paulis['Z1'], num_sim_q)
@@ -439,10 +450,9 @@ class cs_vqe_circuit():
             dim = num_sim_q
             input_ham = ham
         
-        A_red = self.reduce_anz_terms(self.A, num_sim_q)
-        
         # check expectation value of A (if 1 then in +1 eigenspace)
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, quantum_instance=qi)
+        A_red = self.reduce_anz_terms(self.A, num_sim_q)
         A_red_q = qonvert.dict_to_WeightedPauliOperator(A_red)
         A_vqe_run = vqe.compute_minimum_eigenvalue(operator=A_red_q)
         A_expct = A_vqe_run.optimal_value
@@ -502,7 +512,7 @@ class cs_vqe_circuit():
             for i in range(iters):
                 vqe_run = self.CS_VQE(anz_terms, num_sim_q, check_A=check_A)
                 vqe_iters.append(vqe_run)
-                if vqe_run['result']-vqe_run['projected_target'] < 1e-3:
+                if vqe_run['result']-vqe_run['target'] < 1e-3:
                     print('Reached target energy in fewer iterations than specified')
                     break
             vqe_iters = sorted(vqe_iters, key=lambda x:x['result'])

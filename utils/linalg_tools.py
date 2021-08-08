@@ -70,7 +70,7 @@ def eigenstate_projector(A, num_qubits):
     A_op = qonvert.dict_to_QubitOperator(A)
     projector = get_sparse_operator((A_op+I_op)/2, n_qubits=num_qubits).toarray()
     
-    return projector
+    return np.matrix(projector)
 
 
 def noncon_projector(nc_state, Z_indices, num_qubits):
