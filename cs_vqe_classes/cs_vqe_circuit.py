@@ -14,7 +14,7 @@ from qiskit.circuit.parameter import Parameter
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
 from qiskit.utils import QuantumInstance
-from qiskit.aqua.components.optimizers import SLSQP, COBYLA, SPSA, AQGD
+from qiskit.aqua.components.optimizers import SLSQP, COBYLA, SPSA, AQGD, ADAM, IMFIL, BOBYQA, SNOBFIT
 from qiskit.algorithms import VQE
 from qiskit import Aer
 from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state
@@ -355,7 +355,7 @@ class cs_vqe_circuit():
     def build_circuit(self, anz_terms, num_sim_q, trot_order=2):
         """
         """
-        self.ancilla = True
+        self.ancilla = False
 
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
@@ -370,14 +370,14 @@ class cs_vqe_circuit():
         self.ref_state_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
         self.rot_ham_block(qc, num_sim_q)
-        #qc.reset(q_map[self.X_qubit])
+        qc.reset(q_map[self.X_qubit])
         #qc.x(q_map[self.X_qubit])
 
         #self.rot_A_block(qc, num_sim_q, inverse=True)
         
         #qc.reset(q_map[self.X_qubit])
         
-        self.swap_entgl_block(qc, num_sim_q)
+        #self.swap_entgl_block(qc, num_sim_q)
         if list(self.A.values())[0] == -1:
             qc.x(q_map[self.X_qubit])
 
@@ -399,7 +399,7 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=SLSQP(maxiter=500), check_A=False):
+    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=IMFIL, check_A=False, noise=False):
         """
         """
         self.counts.clear()
@@ -410,19 +410,27 @@ class cs_vqe_circuit():
         if init_anz_params == []:
             init_anz_params = [0]
 
-        #device_backend = FakeVigo()
-        backend = Aer.get_backend('statevector_simulator')
         seed = 50
-        #noise_model = None
-        #os.environ['QISKIT_IN_PARALLEL'] = 'TRUE'
-        #device = QasmSimulator.from_backend(device_backend)
-        #coupling_map = device.configuration().coupling_map
-        #noise_model = NoiseModel.from_backend(device)
-        #basis_gates = noise_model.basis_gates
+        algorithm_globals.random_seed = seed
 
-        #algorithm_globals.random_seed = seed
-        qi = QuantumInstance(backend=backend, seed_simulator=seed, seed_transpiler=seed)
-                            #coupling_map=coupling_map, noise_model=noise_model)
+        if not noise:
+            backend = Aer.get_backend('statevector_simulator')
+            qi = QuantumInstance(backend=backend, seed_simulator=seed, seed_transpiler=seed)
+
+        else:
+            device_backend = FakeVigo()
+            noise_model = None
+            backend = Aer.get_backend('qasm_simulator')
+            os.environ['QISKIT_IN_PARALLEL'] = 'TRUE'
+            device = QasmSimulator.from_backend(device_backend)
+            coupling_map = device.configuration().coupling_map
+            noise_model = NoiseModel.from_backend(device)
+            basis_gates = noise_model.basis_gates
+            qi = QuantumInstance(backend=backend, 
+                                seed_simulator=seed, 
+                                seed_transpiler=seed,
+                                coupling_map=coupling_map, 
+                                noise_model=noise_model)
         
         qc = self.build_circuit(anz_terms, num_sim_q)
 
@@ -486,7 +494,7 @@ class cs_vqe_circuit():
                 'errors':errors}
 
 
-    def run_cs_vqe(self, anz_terms, max_sim_q, min_sim_q=0, iters=1, check_A=False):
+    def run_cs_vqe(self, anz_terms, max_sim_q, min_sim_q=0, iters=1, check_A=False, noise=False):
         """
         """
         if max_sim_q>self.num_qubits:
@@ -495,7 +503,7 @@ class cs_vqe_circuit():
 
         rows, cols = la.factor_int(max_sim_q-min_sim_q)
         if rows == 1:
-            grid_pos = range(cols)
+            grid_pos = list(range(cols))
         else:
             grid_pos = list(itertools.product(range(rows), range(cols)))
 
@@ -510,10 +518,15 @@ class cs_vqe_circuit():
             num_sim_q = index+1+min_sim_q
             vqe_iters=[]
             for i in range(iters):
-                vqe_run = self.CS_VQE(anz_terms, num_sim_q, check_A=check_A)
+                vqe_run = self.CS_VQE(anz_terms, num_sim_q, check_A=check_A, noise=noise)
                 vqe_iters.append(vqe_run)
-                if vqe_run['result']-vqe_run['target'] < 1e-3:
-                    print('Reached target energy in fewer iterations than specified')
-                    break
+                if round(vqe_run['A_expct'], 6) == 1:
+                    if vqe_run['result']-vqe_run['projected_target'] < 1e-3:
+                        print('Reached target energy under eigenspace projection')
+                        break
+                else:
+                    if vqe_run['result']-vqe_run['target'] < 1e-3:
+                        print('Reached CS-VQE target energy')
+                        break
             vqe_iters = sorted(vqe_iters, key=lambda x:x['result'])
             self.cs_vqe_results[grid] = vqe_iters[0]
