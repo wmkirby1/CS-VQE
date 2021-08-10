@@ -10,11 +10,13 @@ from copy import deepcopy
 import numpy as np
 import itertools
 
-from qiskit.circuit.parameter import Parameter
+from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
 from qiskit.utils import QuantumInstance
-from qiskit.aqua.components.optimizers import SLSQP, COBYLA, SPSA, AQGD, ADAM, IMFIL, BOBYQA, SNOBFIT
+from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS_B, P_BFGS,
+                                                NELDER_MEAD, CG, ADAM, POWELL, TNC, GSLS,
+                                                NFT, IMFIL, BOBYQA, SNOBFIT)
 from qiskit.algorithms import VQE
 from qiskit import Aer
 from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state
@@ -399,16 +401,16 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=SLSQP(maxiter=1000), check_A=False, noise=False):
+    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=IMFIL(maxiter=1000), check_A=False, noise=False):
         """
         """
         self.counts.clear()
         self.values.clear()
         self.errors.clear()
 
-        init_anz_params = list(-p.imag for p in self.reduce_anz_terms(anz_terms, num_sim_q).values())
+        init_anz_params = np.array(list(-p.imag for p in self.reduce_anz_terms(anz_terms, num_sim_q).values()))
         if init_anz_params == []:
-            init_anz_params = [0]
+            init_anz_params = np.array([0])
 
         seed = 50
         algorithm_globals.random_seed = seed
@@ -433,6 +435,8 @@ class cs_vqe_circuit():
                                 noise_model=noise_model)
         
         qc = self.build_circuit(anz_terms, num_sim_q)
+        bounds = np.array([(p-1, p+1) for p in init_anz_params])
+        qc.parameter_bounds = bounds
 
         # print status update
         sim_qubits = self.sim_qubits(num_sim_q)[0]
@@ -459,7 +463,8 @@ class cs_vqe_circuit():
             input_ham = ham
         
         # check expectation value of A (if 1 then in +1 eigenspace)
-        vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, quantum_instance=qi)
+        # uses BFGS optimizer for speed (not accuracy!)
+        vqe = VQE(qc, initial_point=init_anz_params, optimizer=L_BFGS_B(maxiter=1000), quantum_instance=qi)
         A_red = self.reduce_anz_terms(self.A, num_sim_q)
         A_red_q = qonvert.dict_to_WeightedPauliOperator(A_red)
         A_vqe_run = vqe.compute_minimum_eigenvalue(operator=A_red_q)
@@ -467,6 +472,7 @@ class cs_vqe_circuit():
         print('Expectation value of A:', A_expct)
         
         # simulate the input Hamiltonian
+
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(input_ham)
         input_ham_q = qonvert.dict_to_QubitOperator(input_ham)
@@ -528,5 +534,6 @@ class cs_vqe_circuit():
                     if vqe_run['result']-vqe_run['target'] < 1e-3:
                         print('Reached CS-VQE target energy')
                         break
+            print(' ')
             vqe_iters = sorted(vqe_iters, key=lambda x:x['result'])
             self.cs_vqe_results[grid] = vqe_iters[0]
