@@ -399,7 +399,7 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=IMFIL, check_A=False, noise=False):
+    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=SLSQP(maxiter=1000), check_A=False, noise=False):
         """
         """
         self.counts.clear()
