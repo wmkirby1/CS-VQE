@@ -142,6 +142,13 @@ class cs_vqe_circuit():
             if self.rot_A:
                 a = list(self.A.keys())[0]
                 reference_bits[self.num_qubits-1-a.find('Z')] = self.A[a]
+            blank_state = list(np.zeros(num_qubits, dtype=int))
+            for q in reference_bits.keys():
+                index = self.num_qubits-1-q
+                if reference_bits[q] == -1:
+                    blank_state[index] = 1
+            ref_string = ''.join([str(i) for i in blank_state])
+
         else:
             ham_q = qonvert.dict_to_QubitOperator(input_ham)
             n_q = len(list(input_ham.keys())[0])
@@ -153,8 +160,9 @@ class cs_vqe_circuit():
             reference_str=bit.int_to_bin(int(sig_amp_list[0][0]), n_q)
             for index, b in enumerate(reference_str):
                 reference_bits[n_q-1-index] = int(b)
+            ref_string = ''.join([str(i) for i in reference_bits.values()])
 
-        return reference_bits
+        return ref_string
 
     
     def qubit_map(self, num_sim_q):
@@ -230,25 +238,25 @@ class cs_vqe_circuit():
         """
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
-        #reference_state = self.reference_state(self.hamiltonian)
+        reference_state = self.reference_state(self.hamiltonian)
         
         for q in sim_qubits:
             q_index = self.num_qubits-1-q
-            if self.HF_config[q_index] == '1':
+            if self.HF_config[q_index] == '1':#reference_state[q_index] == '1':
                 qc.x(q_map[q])
 
     def anz_block(self, anz_terms, qc, num_sim_q):
-        anz_terms_reduced = self.reduce_anz_terms(anz_terms, num_sim_q)
         q_map = self.qubit_map(num_sim_q)
-        
-        if anz_terms_reduced == {}:
-            # because VQE requires at least one parameter...
-            qc.rz(Parameter('a'), q_map[self.X_qubit])
-        else:
-            qc = circ.circ_from_paulis(paulis=list(anz_terms_reduced.keys()), circ=qc, trot_order=2, dup_param=False)
-            #qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=True)
-            #qc.reset(num_sim_q)
 
+        if anz_terms is not None:
+            anz_terms_reduced = self.reduce_anz_terms(anz_terms, num_sim_q)
+            if anz_terms_reduced == {}:
+                # because VQE requires at least one parameter...
+                qc.rz(Parameter('a'), q_map[self.X_qubit])
+            else:
+                qc = circ.circ_from_paulis(paulis=list(anz_terms_reduced.keys()), circ=qc, trot_order=2, dup_param=False)
+        else:
+            qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=True)
 
     def swap_entgl_block(self, qc, num_sim_q):
         """requires ancilla
@@ -369,10 +377,10 @@ class cs_vqe_circuit():
 
         qc = QuantumCircuit(dim)
         
-        self.ref_state_block(qc, num_sim_q)
+        #self.ref_state_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
-        self.rot_ham_block(qc, num_sim_q)
-        qc.reset(q_map[self.X_qubit])
+        #self.rot_ham_block(qc, num_sim_q)
+        #qc.reset(q_map[self.X_qubit])
         #qc.x(q_map[self.X_qubit])
 
         #self.rot_A_block(qc, num_sim_q, inverse=True)
@@ -380,8 +388,8 @@ class cs_vqe_circuit():
         #qc.reset(q_map[self.X_qubit])
         
         #self.swap_entgl_block(qc, num_sim_q)
-        if list(self.A.values())[0] == -1:
-            qc.x(q_map[self.X_qubit])
+        #if list(self.A.values())[0] == -1:
+        #    qc.x(q_map[self.X_qubit])
 
         #self.rot_A_block(qc, num_sim_q)
         
@@ -401,17 +409,25 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms, num_sim_q, ham=None, optimizer=IMFIL(maxiter=1000), check_A=False, noise=False):
+    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=1000), check_A=False, noise=False):
         """
         """
         self.counts.clear()
         self.values.clear()
         self.errors.clear()
 
-        init_anz_params = np.array(list(-p.imag for p in self.reduce_anz_terms(anz_terms, num_sim_q).values()))
-        if init_anz_params == []:
-            init_anz_params = np.array([0])
+        qc = self.build_circuit(anz_terms, num_sim_q)
 
+        if anz_terms is not None:
+            init_anz_params = np.array(list(-p.imag for p in self.reduce_anz_terms(anz_terms, num_sim_q).values()))
+            if init_anz_params == []:
+                init_anz_params = np.array([0])
+        else:
+            init_anz_params = np.zeros(qc.num_parameters)
+
+        bounds = np.array([(p-np.pi, p+np.pi) for p in init_anz_params])
+        qc.parameter_bounds = bounds
+        
         seed = 50
         algorithm_globals.random_seed = seed
 
@@ -434,10 +450,6 @@ class cs_vqe_circuit():
                                 coupling_map=coupling_map, 
                                 noise_model=noise_model)
         
-        qc = self.build_circuit(anz_terms, num_sim_q)
-        bounds = np.array([(p-1, p+1) for p in init_anz_params])
-        qc.parameter_bounds = bounds
-
         # print status update
         sim_qubits = self.sim_qubits(num_sim_q)[0]
         ancilla_string = ''
@@ -469,7 +481,8 @@ class cs_vqe_circuit():
         A_red_q = qonvert.dict_to_WeightedPauliOperator(A_red)
         A_vqe_run = vqe.compute_minimum_eigenvalue(operator=A_red_q)
         A_expct = A_vqe_run.optimal_value
-        print('Expectation value of A:', A_expct)
+        if check_A:
+            print('Expectation value of A:', A_expct)
         
         # simulate the input Hamiltonian
 
@@ -500,9 +513,11 @@ class cs_vqe_circuit():
                 'errors':errors}
 
 
-    def run_cs_vqe(self, anz_terms, max_sim_q, min_sim_q=0, iters=1, check_A=False, noise=False):
+    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=1000), iters=1, check_A=False, noise=False):
         """
         """
+        if max_sim_q is None:
+            max_sim_q = self.num_qubits
         if max_sim_q>self.num_qubits:
             print('*** specified maximum number of qubits to simulate exceeds total ***')
             max_sim_q = self.num_qubits
@@ -524,7 +539,7 @@ class cs_vqe_circuit():
             num_sim_q = index+1+min_sim_q
             vqe_iters=[]
             for i in range(iters):
-                vqe_run = self.CS_VQE(anz_terms, num_sim_q, check_A=check_A, noise=noise)
+                vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer, check_A=check_A, noise=noise)
                 vqe_iters.append(vqe_run)
                 if round(vqe_run['A_expct'], 6) == 1:
                     if vqe_run['result']-vqe_run['projected_target'] < 1e-3:
