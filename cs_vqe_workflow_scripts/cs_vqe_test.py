@@ -5,16 +5,15 @@ import utils.molecule_tools as mol
 def cs_vqe_test(bond_len, multiplicity, charge, basis, rot_A, num_sim_q, atom1=None, atom2=None, atom3=None):
     """
     """
-    
+    print('checkpoint 1')
     #construct molecule and related parameters
     atoms = [a for a in [atom1, atom2, atom3] if a is not None]
-    atoms = ['H', 'H', 'H']
     molecule = mol.construct_molecule(atoms, bond_len, multiplicity, charge, basis)
     ham   = molecule['hamiltonian']
     uccsd = molecule['uccsdansatz']
     num_qubits = molecule['num_qubits']
     num_electrons = molecule['num_electrons']
-    
+    print('checkpoint 2', molecule['speciesname'])
     #find noncontextual subset and initialise cs_vqe circuit instance
     terms_noncon = cs_tools.greedy_dfs(ham, 3, criterion='weight')[-1]
     mol_circ = cs_circ.cs_vqe_circuit(hamiltonian=ham,
