@@ -1,5 +1,5 @@
 from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter
+from qiskit.circuit import Parameter, ParameterVector
 import itertools
 
 # TODO update exp_P to use cascade function
@@ -147,12 +147,14 @@ def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
     """
     
     # parameters to be optimised in VQE routine
+    #if params == []:
+    #    param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
+    #    params = [] 
+    #    for comb in list(itertools.combinations(param_chars, 3)):
+    #        char_str = ''.join(comb)
+    #        params.append(Parameter(char_str))
     if params == []:
-        param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
-        params = [] 
-        for comb in list(itertools.combinations(param_chars, 3)):
-            char_str = ''.join(comb)
-            params.append(Parameter(char_str))
+        params = ParameterVector('P', len(paulis))
 
     #initiate quantum state (usually Hartree Fock)
     if circ is None:
@@ -164,8 +166,8 @@ def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
     # ***check whether parameters should be duplicated in circuit copies***
     for t in range(trot_order):
         for index, p in enumerate(paulis):
-            if dup_param:
-                index = index + t*len(paulis)
+            #if dup_param:
+            #    index = index + t*len(paulis)
             circ += exp_P(p_string = p, rot = params[index]/trot_order)
     
     # rotates in accordance with CS-VQE routine

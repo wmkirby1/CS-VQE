@@ -1,7 +1,8 @@
 import utils.qonversion_tools as qonvert
 import utils.bit_tools as bit
+import cs_vqe_classes.cs_vqe_circuit as cs_circ
 from openfermion.ops import QubitOperator
-from openfermion.linalg import LinearQubitOperator, get_sparse_operator
+from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
 import numpy as np
 import math
 
@@ -62,14 +63,14 @@ def expectation(op, state, num_qubits):
     return expect
 
 
-def eigenstate_projector(A, num_qubits):
+def eigenstate_projector(A, num_qubits, eval=+1):
     """
     """
     I_op = QubitOperator.identity()
     A_op = qonvert.dict_to_QubitOperator(A)
-    projector = get_sparse_operator((A_op+I_op)/2, n_qubits=num_qubits).toarray()
+    projector = get_sparse_operator((I_op+eval*A_op)/2, n_qubits=num_qubits).toarray()
     
-    return projector
+    return np.matrix(projector)
 
 
 def noncon_projector(nc_state, Z_indices, num_qubits):
@@ -100,3 +101,28 @@ def apply_projections(psi, proj_list=[]):
     psi = psi/norm
 
     return psi
+
+
+def project_hamiltonian(hamiltonian, terms_noncon, num_qubits):
+    mol = cs_circ.cs_vqe_circuit(hamiltonian, terms_noncon, num_qubits)
+    A = mol.A
+    qubit_nums = range(1, num_qubits+1)
+    
+    gs_true = []
+    gs_proj = []
+
+    for n_q in qubit_nums:
+        ham_red = mol.ham_reduced[n_q-1]
+        ham_red_q = qonvert.dict_to_QubitOperator(ham_red)
+        ham_mat = np.matrix(get_sparse_operator(ham_red_q, n_q).toarray())
+        gs_true.append(get_ground_state(ham_mat)[0])
+        
+        A_red = mol.reduce_anz_terms(A, n_q)
+        eig_mat = np.matrix(eigenstate_projector(A_red, n_q))
+        ham_proj = eig_mat*ham_mat*eig_mat.H
+        gs_proj.append(get_ground_state(ham_proj)[0])
+
+    return {'qubit_nums':list(qubit_nums),
+            'gs_true':gs_true,
+            'gs_proj':gs_proj,
+            'diff':[a-b for a, b in zip(gs_proj, gs_true)]}

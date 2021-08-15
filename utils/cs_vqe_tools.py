@@ -453,7 +453,7 @@ def diagonalize_epistemic(model,fn_form,ep_state,rot_A=False):
             # rotations to diagonalize G union with the new A
             GuA = deepcopy(model[0] + [model[1][0]])
             ep_state_trans = deepcopy(ep_state[0] + [1])
-        
+
         else:
             # rotations to diagonalize G
             GuA = deepcopy(model[0])# + [model[1][0]])
@@ -759,7 +759,8 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
                 order[i] -= 1
     #print('Initial order', order)
     out = []
-    
+    sim_indices = []
+
     for k in range(order_len+1):
     
         ham_rotated = deepcopy(ham)
@@ -807,6 +808,11 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
                 else:
                     ham_red[t_red] = ham_rotated[t]*sgn
 
+        z_complement = list(set(range(n_q))-set(z_indices))
+        for i in z_complement:
+            if i not in sim_indices:
+                sim_indices.append(i)
+        
         out.append(ham_red)
         #print('order after', order)
         if order:
@@ -819,7 +825,7 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
     #if rot_A:
     #    out = out[1:]
 
-    return out
+    return sim_indices, out
 
 
 # Given ham (the full Hamiltonian), model (the quasi-quantized model for the noncontextual part),
@@ -900,7 +906,7 @@ def contextual_subspace_approximations(ham,model,fn_form,ep_state,order):
     #         diagonal_set = diagonal_set[:i]+diagonal_set[i+1:]
     #         vals = vals[:i]+vals[i+1:]
 
-    reduced_hamiltonians = get_reduced_hamiltonians(ham,model,fn_form,ep_state,order)
+    reduced_hamiltonians = get_reduced_hamiltonians(ham,model,fn_form,ep_state,order)[1]
 
     n_q = len(list(ham.keys())[0])
 
