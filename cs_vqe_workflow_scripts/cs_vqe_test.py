@@ -2,11 +2,13 @@ import cs_vqe_classes.cs_vqe_circuit as cs_circ
 import utils.cs_vqe_tools as cs_tools
 import utils.molecule_tools as mol
 
-def cs_vqe_test(atoms, bond_len, multiplicity, charge, basis, rot_A, num_sim_q):
+def cs_vqe_test(bond_len, multiplicity, charge, basis, rot_A, num_sim_q, atom1=None, atom2=None, atom3=None):
     """
     """
     
     #construct molecule and related parameters
+    atoms = [a for a in [atom1, atom2, atom3] if a is not None]
+    atoms = ['H', 'H', 'H']
     molecule = mol.construct_molecule(atoms, bond_len, multiplicity, charge, basis)
     ham   = molecule['hamiltonian']
     uccsd = molecule['uccsdansatz']
