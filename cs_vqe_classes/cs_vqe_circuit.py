@@ -365,7 +365,7 @@ class cs_vqe_circuit():
     def build_circuit(self, anz_terms, num_sim_q, trot_order=2):
         """
         """
-        self.ancilla = False
+        self.ancilla = True
 
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
@@ -377,9 +377,9 @@ class cs_vqe_circuit():
 
         qc = QuantumCircuit(dim)
         
-        #self.ref_state_block(qc, num_sim_q)
+        self.ref_state_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
-        #self.rot_ham_block(qc, num_sim_q)
+        self.rot_ham_block(qc, num_sim_q)
         #qc.reset(q_map[self.X_qubit])
         #qc.x(q_map[self.X_qubit])
 
@@ -387,9 +387,9 @@ class cs_vqe_circuit():
         
         #qc.reset(q_map[self.X_qubit])
         
-        #self.swap_entgl_block(qc, num_sim_q)
-        #if list(self.A.values())[0] == -1:
-        #    qc.x(q_map[self.X_qubit])
+        self.swap_entgl_block(qc, num_sim_q)
+        if list(self.A.values())[0] == -1:
+            qc.x(q_map[self.X_qubit])
 
         #self.rot_A_block(qc, num_sim_q)
         
@@ -409,7 +409,7 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=1000), check_A=False, noise=False):
+    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), check_A=False, noise=False):
         """
         """
         self.counts.clear()
@@ -425,7 +425,7 @@ class cs_vqe_circuit():
         else:
             init_anz_params = np.zeros(qc.num_parameters)
 
-        bounds = np.array([(p-np.pi, p+np.pi) for p in init_anz_params])
+        bounds = np.array([(p-np.pi/8, p+np.pi/8) for p in init_anz_params])
         qc.parameter_bounds = bounds
         
         seed = 50
@@ -513,7 +513,7 @@ class cs_vqe_circuit():
                 'errors':errors}
 
 
-    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=1000), iters=1, check_A=False, noise=False):
+    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), iters=1, check_A=False, noise=False):
         """
         """
         if max_sim_q is None:

@@ -63,12 +63,12 @@ def expectation(op, state, num_qubits):
     return expect
 
 
-def eigenstate_projector(A, num_qubits):
+def eigenstate_projector(A, num_qubits, eval=+1):
     """
     """
     I_op = QubitOperator.identity()
     A_op = qonvert.dict_to_QubitOperator(A)
-    projector = get_sparse_operator((A_op+I_op)/2, n_qubits=num_qubits).toarray()
+    projector = get_sparse_operator((I_op+eval*A_op)/2, n_qubits=num_qubits).toarray()
     
     return np.matrix(projector)
 
