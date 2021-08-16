@@ -13,7 +13,7 @@ steps:
   config:
     runtime:
       language: python3
-      imports: [cs-vqe-component]
+      imports: [cs-vqe-component/cs_vqe_classes, cs-vqe-component/utils, cs_vqe_component]
       parameters:
         file: cs-vqe-component/cs_vqe_test.py
         function: cs_vqe_test
