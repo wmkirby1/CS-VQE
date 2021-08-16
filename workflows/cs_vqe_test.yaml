@@ -7,20 +7,15 @@ imports:
   parameters:
     repository: "https://github.com/TimWeaving/CS-VQE.git"
     branch: "sandbox"
-- name: qc-research-component
-  type: git
-  parameters:
-    repository: "https://github.com/TimWeaving/qc-research.git"
-    branch: "master"
 
 steps:
 - name: run-cs-vqe
   config:
     runtime:
       language: python3
-      imports: [cs-vqe-component, qc-research-component]
+      imports: [cs-vqe-component]
       parameters:
-        file: qc-research-component/steps/cs_vqe_test.py
+        file: cs-vqe-component/steps/cs_vqe_test.py
         function: cs_vqe_test
   inputs:
     - atom1: 'H'
