@@ -44,11 +44,11 @@ def plot_cs_vqe_convergence(data, title):
         l4 = axs[grid].plot([1], [0], color='purple', ls='--', zorder=3, label='Target Value')
         l5 = axs[grid].plot([1], [0], color='b', ls='--', zorder=4, label='Convergence Value')
         l6 = axs[grid].plot([1], [0], color='pink', zorder=5, label='Chemical accuracy')
-        axs[grid].hlines(vqe_result['projected_target'], X[0], X[-1], color='orange', ls='--')
+        
+        #axs[grid].hlines(vqe_result['projected_target'], X[0], X[-1], color='orange', ls='--')
         # expectation value of A
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        axs[grid].text(0.7, 0.45, '<ψ|A|ψ>='+str(round(vqe_result['A_expct'], 10)), transform = axs[grid].transAxes, bbox=props)
-
+        #props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        #axs[grid].text(0.7, 0.45, '<ψ|A|ψ>='+str(round(vqe_result['A_expct'], 10)), transform = axs[grid].transAxes, bbox=props)
 
         #axs[grid].set_xticks(X)
         if vqe_result['num_sim_q'] == data['num_qubits']:

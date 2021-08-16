@@ -34,8 +34,6 @@ import os
 from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.test.mock import FakeVigo
-device_backend = FakeVigo()
-
 
 class cs_vqe_circuit():
     """
@@ -142,7 +140,7 @@ class cs_vqe_circuit():
             if self.rot_A:
                 a = list(self.A.keys())[0]
                 reference_bits[self.num_qubits-1-a.find('Z')] = self.A[a]
-            blank_state = list(np.zeros(num_qubits, dtype=int))
+            blank_state = list(np.zeros(self.num_qubits, dtype=int))
             for q in reference_bits.keys():
                 index = self.num_qubits-1-q
                 if reference_bits[q] == -1:
@@ -197,15 +195,15 @@ class cs_vqe_circuit():
                 else:
                     blank_op[i] = p[sim_i]
             
-            if set(blank_op) != {'I'}:
-                t = ''.join(blank_op)
-                if self.ancilla:
-                    t = 'I' + t
-                if t in anz_terms_reduced.keys():
-                    anz_terms_reduced[t] = anz_terms_reduced[t] + anz_terms[p]
-                else:
-                    anz_terms_reduced[t] = anz_terms[p]
-        
+            #if set(blank_op) != {'I'}:
+            t = ''.join(blank_op)
+            if self.ancilla:
+                t = 'I' + t
+            if t in anz_terms_reduced.keys():
+                anz_terms_reduced[t] = anz_terms_reduced[t] + anz_terms[p]
+            else:
+                anz_terms_reduced[t] = anz_terms[p]
+
         return anz_terms_reduced
 
     
@@ -232,6 +230,12 @@ class cs_vqe_circuit():
     ################################## circuit blocks #################################
     ## Below are circuit components that may be selected in the build_circuit method ##
     ###################################################################################
+
+    def gs_check_block(self, qc, num_sim_q):
+        ham_red = self.ham_reduced[num_sim_q]
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
+        gs_vector = get_ground_state(ham_mat)[1]
+        qc.initialize(gs_vector)
 
     def ref_state_block(self, qc, num_sim_q):
         """
@@ -362,10 +366,10 @@ class cs_vqe_circuit():
     ####################### circuit builder and VQE functionality #####################
     ###################################################################################
 
-    def build_circuit(self, anz_terms, num_sim_q, trot_order=2):
+    def build_circuit(self, anz_terms, num_sim_q):
         """
         """
-        self.ancilla = True
+        self.ancilla = False
 
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
@@ -377,25 +381,22 @@ class cs_vqe_circuit():
 
         qc = QuantumCircuit(dim)
         
-        self.ref_state_block(qc, num_sim_q)
+        #self.gs_check_block(qc, num_sim_q)
+        #self.rot_ham_block(qc, num_sim_q, inverse=True)
+        
+        #qc.rz(Parameter('a'), 0)
+        #self.ref_state_block(qc, num_sim_q)
+        for q in sim_qubits:
+            if q in [5,4,3]:
+                qc.x(q_map[q])
+        
         self.anz_block(anz_terms, qc, num_sim_q)
         self.rot_ham_block(qc, num_sim_q)
-        #qc.reset(q_map[self.X_qubit])
-        #qc.x(q_map[self.X_qubit])
 
-        #self.rot_A_block(qc, num_sim_q, inverse=True)
-        
         #qc.reset(q_map[self.X_qubit])
-        
-        self.swap_entgl_block(qc, num_sim_q)
-        if list(self.A.values())[0] == -1:
-            qc.x(q_map[self.X_qubit])
-
-        #self.rot_A_block(qc, num_sim_q)
-        
-        #self.A_eig_block(qc, num_sim_q)
-        #self.parity_cascade_block(qc, self.index_paulis['Z1'], num_sim_q)
-        #qc.reset(num_sim_q)
+        #self.swap_entgl_block(qc, num_sim_q)
+        #if round(list(self.A.values())[0], 8) == -1:
+        #    qc.x(q_map[self.X_qubit])
 
         #print(qc.draw())
         return qc
@@ -419,16 +420,16 @@ class cs_vqe_circuit():
         qc = self.build_circuit(anz_terms, num_sim_q)
 
         if anz_terms is not None:
-            init_anz_params = np.array(list(-p.imag for p in self.reduce_anz_terms(anz_terms, num_sim_q).values()))
+            anz_red = self.reduce_anz_terms(anz_terms, num_sim_q)
+            init_anz_params = np.array([-(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
             if init_anz_params == []:
                 init_anz_params = np.array([0])
         else:
             init_anz_params = np.zeros(qc.num_parameters)
 
-        bounds = np.array([(p-np.pi/8, p+np.pi/8) for p in init_anz_params])
+        bounds = np.array([(p-np.pi/4, p+np.pi/4) for p in init_anz_params])
         qc.parameter_bounds = bounds
-        
-        seed = 50
+        seed = 75
         algorithm_globals.random_seed = seed
 
         if not noise:
@@ -462,7 +463,7 @@ class cs_vqe_circuit():
         print(status+ancilla_string)
 
         if ham is None:
-            ham = self.ham_reduced[num_sim_q-1]
+            ham = self.ham_reduced[num_sim_q]
 
         if self.ancilla:
             dim = num_sim_q + 1
