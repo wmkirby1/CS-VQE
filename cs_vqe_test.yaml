@@ -15,7 +15,7 @@ steps:
       language: python3
       imports: [cs-vqe-component]
       parameters:
-        file: cs-vqe-component/steps/cs_vqe_test.py
+        file: cs-vqe-component/cs_vqe_test.py
         function: cs_vqe_test
   inputs:
     - atom1: 'H'
