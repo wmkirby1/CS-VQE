@@ -1,0 +1,49 @@
+apiVersion: io.orquestra.workflow/1.0.0
+name: cs-vqe-test
+
+imports:
+- name: cs-vqe-component
+  type: git
+  parameters:
+    repository: "https://github.com/TimWeaving/CS-VQE.git"
+    branch: "sandbox"
+- name: qc-research-component
+  type: git
+  parameters:
+    repository: "https://github.com/TimWeaving/qc-research.git"
+    branch: "master"
+
+steps:
+- name: run-cs-vqe
+  config:
+    runtime:
+      language: python3
+      imports: [cs-vqe-component, qc-research-component]
+      parameters:
+        file: qc-research-component/steps/cs_vqe_test.py
+        function: cs_vqe_test
+  inputs:
+    - atom1: 'H'
+      type: string
+    - atom2: 'H'
+      type: string
+    - atom3: 'H'
+      type: string
+    - bond_len: 0.772
+      type: float
+    - multiplicity: 1
+      type: int
+    - charge: 1
+      type: int
+    - basis: 'sto-3g'
+      type: string
+    - rot_A: True
+      type: bool
+    - num_sim_q: 3
+      type: int
+  outputs:
+  - name: result
+    type: output
+
+types:
+ - output
