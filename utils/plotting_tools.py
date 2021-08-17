@@ -89,7 +89,7 @@ def plot_cs_vqe_convergence(data, title):
         if vqe_result['result']<data['gs_noncon_energy']+0.1:
             sub_axes.hlines(vqe_result['result'], X_zoom[0], X_zoom[-1], color='b', ls='--')
             sub_axes.text(x=X_zoom[0], y=vqe_result['result']-0.005, s= 'min = '+str(round(Y[-1], 4)), size='small')
-        sub_axes.hlines(vqe_result['projected_target'], X_zoom[0], X_zoom[-1], color='orange', ls='--')
+        #sub_axes.hlines(vqe_result['projected_target'], X_zoom[0], X_zoom[-1], color='orange', ls='--')
         
         if data['rows'] != 1:
             if grid[0] == data['rows']-1:

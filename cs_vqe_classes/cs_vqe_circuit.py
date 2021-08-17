@@ -19,9 +19,10 @@ from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS
                                                 NFT, IMFIL, BOBYQA, SNOBFIT)
 from qiskit.algorithms import VQE
 from qiskit import Aer
-from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state
+from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state, jw_configuration_state
 
 import numpy as np
+import matplotlib.pyplot as plt
 import pylab
 
 from qiskit import Aer
@@ -47,7 +48,8 @@ class cs_vqe_circuit():
     ancilla = False
     
     def __init__(self, hamiltonian, terms_noncon, num_qubits, num_electrons, order=None, rot_G=True, rot_A=False):
-        for index, i in enumerate(jw_hartree_fock_state(num_electrons, num_qubits)):
+        #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
+        for index, i in enumerate(jw_configuration_state(range(int(num_qubits/2)), num_qubits)):
             if i == 1:
                 self.HF_config = bit.int_to_bin(index, num_qubits)
         
@@ -143,7 +145,7 @@ class cs_vqe_circuit():
             blank_state = list(np.zeros(self.num_qubits, dtype=int))
             for q in reference_bits.keys():
                 index = self.num_qubits-1-q
-                if reference_bits[q] == -1:
+                if round(reference_bits[q]) == -1:
                     blank_state[index] = 1
             ref_string = ''.join([str(i) for i in blank_state])
 
@@ -225,6 +227,33 @@ class cs_vqe_circuit():
                 rot_red.append((t, r))
 
         return rot_red
+
+    
+    def project_anz_terms(self, anz_terms, num_sim_q):
+        """
+        """
+        sim_indices = list(self.sim_qubits(num_sim_q)[1])
+        sim_complement = list(set(range(self.num_qubits))-set(sim_indices))
+        anz_rot = c_tools.rotate_operator(self.ham_rotations, anz_terms)
+        nc_state = self.reference_state()
+        proj_anz = {}
+        
+        for p in anz_rot.keys():
+            proj_pauli = [p[i] for i in sim_complement]
+            if ('X' not in proj_pauli) and ('Y' not in proj_pauli):
+                parity = int(len([i for i in sim_complement if nc_state[i]=='1' and p[i]=='Z'])%2)
+                #print(parity)
+                sgn = 1-2*parity
+                #print(p, sgn)
+                sim_pauli_list = [p[i] for i in sim_indices]
+                sim_pauli = ''.join(sim_pauli_list)
+                if sim_pauli in proj_anz.keys():
+                    proj_anz[sim_pauli] = proj_anz[sim_pauli] + sgn*anz_rot[p]
+                else:
+                    proj_anz[sim_pauli] = sgn*anz_rot[p]
+
+        return proj_anz
+
     
 
     ################################## circuit blocks #################################
@@ -232,35 +261,50 @@ class cs_vqe_circuit():
     ###################################################################################
 
     def gs_check_block(self, qc, num_sim_q):
+        """
+        """
         ham_red = self.ham_reduced[num_sim_q]
         ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
         gs_vector = get_ground_state(ham_mat)[1]
         qc.initialize(gs_vector)
 
-    def ref_state_block(self, qc, num_sim_q):
+
+    def ref_state_block(self, qc, num_sim_q, ref_type='nc_gs'):
         """
         """
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
-        reference_state = self.reference_state(self.hamiltonian)
+        
+        if ref_type=='most significant':
+            reference_state = self.reference_state(self.hamiltonian)
+        elif ref_type=='nc_gs':
+            reference_state = self.reference_state()
+        elif ref_type=='HF':
+            reference_state = self.HF_config
+        else:
+            raise ValueError('Invalid reference state type - must be "most significant", "nc_gs" or "HF".')
         
         for q in sim_qubits:
             q_index = self.num_qubits-1-q
-            if self.HF_config[q_index] == '1':#reference_state[q_index] == '1':
+            if reference_state[q_index] == '1':
                 qc.x(q_map[q])
 
+
     def anz_block(self, anz_terms, qc, num_sim_q):
+        """
+        """
         q_map = self.qubit_map(num_sim_q)
 
         if anz_terms is not None:
-            anz_terms_reduced = self.reduce_anz_terms(anz_terms, num_sim_q)
+            anz_terms_reduced = self.project_anz_terms(anz_terms, num_sim_q)
             if anz_terms_reduced == {}:
                 # because VQE requires at least one parameter...
-                qc.rz(Parameter('a'), q_map[self.X_qubit])
+                qc.rz(Parameter('a'), 0)
             else:
                 qc = circ.circ_from_paulis(paulis=list(anz_terms_reduced.keys()), circ=qc, trot_order=2, dup_param=False)
         else:
             qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=True)
+
 
     def swap_entgl_block(self, qc, num_sim_q):
         """requires ancilla
@@ -273,6 +317,8 @@ class cs_vqe_circuit():
 
 
     def rot_ham_block(self, qc, num_sim_q, inverse=False):
+        """
+        """
         ham_rot = self.reduce_rotations(self.ham_rotations, num_sim_q)
         if inverse:
             ham_rot.reverse()
@@ -369,6 +415,17 @@ class cs_vqe_circuit():
     def build_circuit(self, anz_terms, num_sim_q):
         """
         """
+        ham_red = self.ham_reduced[num_sim_q]
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
+        gs_vector = get_ground_state(ham_mat)[1]
+        amp_list = [abs(a)**2 for a in list(gs_vector)]
+        sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
+        sig_amp_list.reverse()
+        X, Y = zip(*sig_amp_list)
+        fig, ax = plt.subplots()
+        ax.bar(X, Y)
+        print(plt.show())
+
         self.ancilla = False
 
         q_map = self.qubit_map(num_sim_q)
@@ -382,23 +439,18 @@ class cs_vqe_circuit():
         qc = QuantumCircuit(dim)
         
         #self.gs_check_block(qc, num_sim_q)
-        #self.rot_ham_block(qc, num_sim_q, inverse=True)
-        
-        #qc.rz(Parameter('a'), 0)
-        #self.ref_state_block(qc, num_sim_q)
-        for q in sim_qubits:
-            if q in [5,4,3]:
-                qc.x(q_map[q])
-        
+        #for q in sim_qubits:
+        #    if q in [5, 2]:
+        #        qc.x(q_map[q])
+
+        self.ref_state_block(qc, num_sim_q)
+        #self.rot_ham_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
-        self.rot_ham_block(qc, num_sim_q)
 
-        #qc.reset(q_map[self.X_qubit])
-        #self.swap_entgl_block(qc, num_sim_q)
-        #if round(list(self.A.values())[0], 8) == -1:
-        #    qc.x(q_map[self.X_qubit])
-
-        #print(qc.draw())
+        # qiskit variational_algorithm struggling with only one parameter
+        if qc.num_parameters == 1:
+            qc.rz(Parameter('b'), 0)
+        print(qc.draw())
         return qc
 
 
@@ -420,18 +472,18 @@ class cs_vqe_circuit():
         qc = self.build_circuit(anz_terms, num_sim_q)
 
         if anz_terms is not None:
-            anz_red = self.reduce_anz_terms(anz_terms, num_sim_q)
-            init_anz_params = np.array([-(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
-            if init_anz_params == []:
-                init_anz_params = np.array([0])
-        else:
-            init_anz_params = np.zeros(qc.num_parameters)
-
-        bounds = np.array([(p-np.pi/4, p+np.pi/4) for p in init_anz_params])
+            anz_red = self.project_anz_terms(anz_terms, num_sim_q)
+            if anz_red != {}:
+                init_anz_params = np.array([-(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
+                if len(init_anz_params) != qc.num_parameters:
+                    init_anz_params = np.append(init_anz_params, 0)
+            else:
+                init_anz_params = np.zeros(qc.num_parameters)
+        bounds = np.array([(p-np.pi/12, p+np.pi/12) for p in init_anz_params])
         qc.parameter_bounds = bounds
-        seed = 75
+        
+        seed = 42
         algorithm_globals.random_seed = seed
-
         if not noise:
             backend = Aer.get_backend('statevector_simulator')
             qi = QuantumInstance(backend=backend, seed_simulator=seed, seed_transpiler=seed)
@@ -542,14 +594,9 @@ class cs_vqe_circuit():
             for i in range(iters):
                 vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer, check_A=check_A, noise=noise)
                 vqe_iters.append(vqe_run)
-                if round(vqe_run['A_expct'], 6) == 1:
-                    if vqe_run['result']-vqe_run['projected_target'] < 1e-3:
-                        print('Reached target energy under eigenspace projection')
-                        break
-                else:
-                    if vqe_run['result']-vqe_run['target'] < 1e-3:
-                        print('Reached CS-VQE target energy')
-                        break
+                if vqe_run['result']-vqe_run['target'] < 0.0016:
+                    print('Converged on CS-VQE target energy')
+                    break
             print(' ')
             vqe_iters = sorted(vqe_iters, key=lambda x:x['result'])
             self.cs_vqe_results[grid] = vqe_iters[0]
