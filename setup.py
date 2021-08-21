@@ -18,5 +18,11 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent"],
     setup_requires=["setuptools_scm~=6.0"],
-    install_requires = ["openfermionpyscf @ git+ssh://git@github.com/quantumlib/OpenFermion-PySCF.git"]
+    install_requires = [
+        'OpenFermion-PySCF'
+    ],
+
+    dependency_links=[
+        'git+ssh://git@github.com/quantumlib/OpenFermion-PySCF.git#egg=OpenFermion-PySCF-0.1'
+    ]
 )
