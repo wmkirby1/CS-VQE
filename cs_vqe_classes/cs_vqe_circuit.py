@@ -47,7 +47,7 @@ class cs_vqe_circuit():
     # if True adds additional qubit to circuit
     ancilla = False
     
-    def __init__(self, hamiltonian, terms_noncon, num_qubits, num_electrons, order=None, rot_G=True, rot_A=False):
+    def __init__(self, hamiltonian, terms_noncon, num_qubits, order=None, rot_G=True, rot_A=False):
         #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
         for index, i in enumerate(jw_configuration_state(range(int(num_qubits/2)), num_qubits)):
             if i == 1:
@@ -247,10 +247,11 @@ class cs_vqe_circuit():
                 #print(p, sgn)
                 sim_pauli_list = [p[i] for i in sim_indices]
                 sim_pauli = ''.join(sim_pauli_list)
-                if sim_pauli in proj_anz.keys():
-                    proj_anz[sim_pauli] = proj_anz[sim_pauli] + sgn*anz_rot[p]
-                else:
-                    proj_anz[sim_pauli] = sgn*anz_rot[p]
+                if set(sim_pauli) != {'I'}:
+                    if sim_pauli in proj_anz.keys():
+                        proj_anz[sim_pauli] = proj_anz[sim_pauli] + sgn*anz_rot[p]
+                    else:
+                        proj_anz[sim_pauli] = sgn*anz_rot[p]
 
         return proj_anz
 
@@ -412,19 +413,27 @@ class cs_vqe_circuit():
     ####################### circuit builder and VQE functionality #####################
     ###################################################################################
 
+    def full_uccsd(self, anz_terms):
+        q_map = self.qubit_map(self.num_qubits)
+        qc = QuantumCircuit(self.num_qubits)
+        for q in self.HF_config:
+            qc.x(q_map[int(q)])
+        qc = circ.circ_from_paulis(paulis=list(anz_terms.keys()), circ=qc, trot_order=2, dup_param=False)
+        return qc
+    
     def build_circuit(self, anz_terms, num_sim_q):
         """
         """
-        ham_red = self.ham_reduced[num_sim_q]
-        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
-        gs_vector = get_ground_state(ham_mat)[1]
-        amp_list = [abs(a)**2 for a in list(gs_vector)]
-        sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
-        sig_amp_list.reverse()
-        X, Y = zip(*sig_amp_list)
-        fig, ax = plt.subplots()
-        ax.bar(X, Y)
-        print(plt.show())
+        #ham_red = self.ham_reduced[num_sim_q]
+        #ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
+        #gs_vector = get_ground_state(ham_mat)[1]
+        #amp_list = [abs(a)**2 for a in list(gs_vector)]
+        #sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
+        #sig_amp_list.reverse()
+        #X, Y = zip(*sig_amp_list)
+        #fig, ax = plt.subplots()
+        #ax.bar(X, Y)
+        #print(plt.show())
 
         self.ancilla = False
 
@@ -450,7 +459,7 @@ class cs_vqe_circuit():
         # qiskit variational_algorithm struggling with only one parameter
         if qc.num_parameters == 1:
             qc.rz(Parameter('b'), 0)
-        print(qc.draw())
+        #print(qc.draw())
         return qc
 
 
@@ -479,7 +488,7 @@ class cs_vqe_circuit():
                     init_anz_params = np.append(init_anz_params, 0)
             else:
                 init_anz_params = np.zeros(qc.num_parameters)
-        bounds = np.array([(p-np.pi/12, p+np.pi/12) for p in init_anz_params])
+        bounds = np.array([(p-np.pi/8, p+np.pi/8) for p in init_anz_params])
         qc.parameter_bounds = bounds
         
         seed = 42
@@ -511,7 +520,7 @@ class cs_vqe_circuit():
             ancilla_string = ' + ancilla'
             num_sim_print += 1
 
-        status = '*Performing %i-qubit CS-VQE over qubit positions %s' % (num_sim_print, str(list(sim_qubits))[1:-1])
+        status = '*   Performing %i-qubit CS-VQE over qubit positions %s ...' % (num_sim_print, str(list(sim_qubits))[1:-1])
         print(status+ancilla_string)
 
         if ham is None:
@@ -541,8 +550,7 @@ class cs_vqe_circuit():
 
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(input_ham)
-        input_ham_q = qonvert.dict_to_QubitOperator(input_ham)
-        gs_red = get_ground_state(get_sparse_operator(input_ham_q, dim).toarray())
+        gs_red = get_ground_state(vqe_input_ham.to_matrix())
         target_energy = gs_red[0]
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)
 
@@ -551,7 +559,7 @@ class cs_vqe_circuit():
         errors = deepcopy(self.errors)
 
         # compute target energy for projected hamiltonian
-        ham_mat = np.matrix(get_sparse_operator(input_ham_q, dim).toarray())
+        ham_mat = np.matrix(vqe_input_ham.to_matrix())
         eig_mat = np.matrix(la.eigenstate_projector(A_red, dim))
         ham_proj = eig_mat*ham_mat*eig_mat.H
         proj_energy = get_ground_state(ham_proj)[0]
@@ -572,7 +580,7 @@ class cs_vqe_circuit():
         if max_sim_q is None:
             max_sim_q = self.num_qubits
         if max_sim_q>self.num_qubits:
-            print('*** specified maximum number of qubits to simulate exceeds total ***')
+            print('WARNING: specified maximum number of qubits to simulate exceeds total', '\n')
             max_sim_q = self.num_qubits
 
         rows, cols = la.factor_int(max_sim_q-min_sim_q)
@@ -594,9 +602,13 @@ class cs_vqe_circuit():
             for i in range(iters):
                 vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer, check_A=check_A, noise=noise)
                 vqe_iters.append(vqe_run)
-                if vqe_run['result']-vqe_run['target'] < 0.0016:
-                    print('Converged on CS-VQE target energy')
+                print('**  Contextual target:', round(vqe_run['target'], 15), '| VQE result:', round(vqe_run['result'], 15))
+                error = vqe_run['result']-vqe_run['target']
+                if error < 0.0016:
+                    print('*** Succesfully converged on CS-VQE target energy')
                     break
+                else:
+                    print('*** Did not converge on contextual target | Error = ', round(error, 5))
             print(' ')
             vqe_iters = sorted(vqe_iters, key=lambda x:x['result'])
             self.cs_vqe_results[grid] = vqe_iters[0]

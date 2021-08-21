@@ -18,24 +18,8 @@ steps:
         file: cs-vqe-component/steps/cs_vqe_test.py
         function: cs_vqe_test
   inputs:
-    - atom1: 'H'
+    - speciesname: 'H3+_STO-3G_SINGLET'
       type: string
-    - atom2: 'H'
-      type: string
-    - atom3: 'H'
-      type: string
-    - bond_len: 0.772
-      type: float
-    - multiplicity: 1
-      type: int
-    - charge: 1
-      type: int
-    - basis: 'sto-3g'
-      type: string
-    - rot_A: True
-      type: bool
-    - num_sim_q: 3
-      type: int
   outputs:
   - name: result
     type: output
