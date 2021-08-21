@@ -18,5 +18,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    setup_requires=["setuptools_scm~=6.0"],
+    setup_requires=["setuptools_scm~=6.0"]
+    dependency_links=['https://github.com/quantumlib/OpenFermion-PySCF/tree/master/openfermionpyscf/tarball/master#egg=package-1.0'],
 )
