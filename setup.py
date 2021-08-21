@@ -13,8 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/TimWeaving/CS-VQE",
     packages=setuptools.find_namespace_packages(
-        include=["utils.*", "cs_vqe_classes.*"]),
-    package_dir={"": ""},
+        include=["utils", "cs_vqe_classes", "steps"]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
