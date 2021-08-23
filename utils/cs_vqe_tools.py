@@ -809,6 +809,7 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
                     ham_red[t_red] = ham_rotated[t]*sgn
 
         z_complement = list(set(range(n_q))-set(z_indices))
+        #print(z_complement)
         for i in z_complement:
             if i not in sim_indices:
                 sim_indices.append(i)

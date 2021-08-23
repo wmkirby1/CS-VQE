@@ -30,8 +30,11 @@ def find_tapering(ham_q, num_qubits, taper_num):
         if taper_energy - full_energy < 0.0016:
             print("Tapering successful")
             break
+    
+    best_taper = sorted(taper_results, key=lambda x:x[0])[0]
+    print("Tapering error = ", best_taper[0]-full_energy)
 
-    return sorted(taper_results, key=lambda x:x[0])[0][1]
+    return best_taper[1]
 
 
 def construct_molecule(atoms, coords, multiplicity, charge, basis, taper_num=0):

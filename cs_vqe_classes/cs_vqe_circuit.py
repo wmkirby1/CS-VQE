@@ -47,7 +47,7 @@ class cs_vqe_circuit():
     # if True adds additional qubit to circuit
     ancilla = False
     
-    def __init__(self, hamiltonian, terms_noncon, num_qubits, order=None, rot_G=True, rot_A=False):
+    def __init__(self, hamiltonian, terms_noncon, num_qubits, order=None, rot_G=True, rot_A=True):
         #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
         for index, i in enumerate(jw_configuration_state(range(int(num_qubits/2)), num_qubits)):
             if i == 1:
@@ -84,7 +84,7 @@ class cs_vqe_circuit():
         if order is None:
             order = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.true_gs)[3]
         self.order, self.ham_reduced = cs.reduced_hamiltonian(order)
-        
+
         # +1-eigenstate parameters
         self.init_state = cs.init_state()
         eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
@@ -424,16 +424,16 @@ class cs_vqe_circuit():
     def build_circuit(self, anz_terms, num_sim_q):
         """
         """
-        #ham_red = self.ham_reduced[num_sim_q]
-        #ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
-        #gs_vector = get_ground_state(ham_mat)[1]
-        #amp_list = [abs(a)**2 for a in list(gs_vector)]
-        #sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
-        #sig_amp_list.reverse()
-        #X, Y = zip(*sig_amp_list)
-        #fig, ax = plt.subplots()
-        #ax.bar(X, Y)
-        #print(plt.show())
+        ham_red = self.ham_reduced[num_sim_q]
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
+        gs_vector = get_ground_state(ham_mat)[1]
+        amp_list = [abs(a)**2 for a in list(gs_vector)]
+        sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
+        sig_amp_list.reverse()
+        X, Y = zip(*sig_amp_list)
+        fig, ax = plt.subplots()
+        ax.bar(X, Y)
+        print(plt.show())
 
         self.ancilla = False
 
@@ -446,20 +446,21 @@ class cs_vqe_circuit():
             dim = num_sim_q
 
         qc = QuantumCircuit(dim)
-        
+        self.ref_state_block(qc, num_sim_q)
         #self.gs_check_block(qc, num_sim_q)
         #for q in sim_qubits:
         #    if q in [5, 2]:
         #        qc.x(q_map[q])
-
-        self.ref_state_block(qc, num_sim_q)
+        #params = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
+        #for q in range(num_sim_q):
+        #    qc.rx(Parameter(params[q]), q)
         #self.rot_ham_block(qc, num_sim_q)
         self.anz_block(anz_terms, qc, num_sim_q)
 
         # qiskit variational_algorithm struggling with only one parameter
         if qc.num_parameters == 1:
             qc.rz(Parameter('b'), 0)
-        #print(qc.draw())
+        print(qc.draw())
         return qc
 
 
@@ -479,15 +480,18 @@ class cs_vqe_circuit():
         self.errors.clear()
 
         qc = self.build_circuit(anz_terms, num_sim_q)
+        #init_anz_params = np.array([0 for i in range(num_sim_q)])
+        #bounds = np.array([(-np.pi/2, np.pi/2) for i in range(num_sim_q)])
 
         if anz_terms is not None:
             anz_red = self.project_anz_terms(anz_terms, num_sim_q)
             if anz_red != {}:
-                init_anz_params = np.array([-(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
+                init_anz_params = np.array([(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
                 if len(init_anz_params) != qc.num_parameters:
-                    init_anz_params = np.append(init_anz_params, 0)
+                    init_anz_params = np.append(init_anz_params, 0)  
             else:
                 init_anz_params = np.zeros(qc.num_parameters)
+
         bounds = np.array([(p-np.pi/8, p+np.pi/8) for p in init_anz_params])
         qc.parameter_bounds = bounds
         
