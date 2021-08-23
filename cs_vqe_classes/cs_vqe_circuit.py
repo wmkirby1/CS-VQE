@@ -472,7 +472,7 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=POWELL(maxiter=10000), check_A=False, noise=False):
+    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), check_A=False, noise=False):
         """
         """
         self.counts.clear()
@@ -578,7 +578,7 @@ class cs_vqe_circuit():
                 'errors':errors}
 
 
-    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=POWELL(maxiter=10000), iters=1, check_A=False, noise=False):
+    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), iters=1, check_A=False, noise=False):
         """
         """
         if max_sim_q is None:
