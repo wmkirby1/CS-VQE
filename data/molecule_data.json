@@ -8,6 +8,24 @@
     "charge":0,
     "basis":"3-21g"
     },
+"H2_6-31G_SINGLET":{
+    "atoms": ["H", "H"],
+    "bond_len":0.7414,
+    "coords":[  [0.0000,0.0000,0.3749],
+                [0.0000,0.0000,-0.3749]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"6-31g"
+    },
+"H2_6-311G_SINGLET":{
+    "atoms": ["H", "H"],
+    "bond_len":0.7414,
+    "coords":[  [0.0000,0.0000,0.3749],
+                [0.0000,0.0000,-0.3749]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"6-311g"
+    },
 "H3+_STO-3G_SINGLET":{
     "atoms": ["H", "H", "H"],
     "bond_len":0.90,
@@ -142,6 +160,59 @@
                 [0.0000000,0.0000000,-0.9345950]],
     "multiplicity":1,
     "charge":1,
+    "basis":"sto-3g"
+    },
+"F2_STO-3G_SINGLET":{
+    "atoms": ["F", "F"],
+    "bond_len":0,
+    "coords":[  [0.0000000,	0.0000000,	0.6937880],
+                [0.0000000,	0.0000000,	-0.6937880]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"Li_STO-3G_SINGLET":{
+    "atoms": ["Li"],
+    "bond_len":0,
+    "coords":[[0,0,0]],
+    "multiplicity":2,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"O_STO-3G_SINGLET":{
+    "atoms": ["O"],
+    "bond_len":0,
+    "coords":[[0,0,0]],
+    "multiplicity":3,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"N_STO-3G_SINGLET":{
+    "atoms": ["N"],
+    "bond_len":0,
+    "coords":[[0,0,0]],
+    "multiplicity":4,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"CH2_STO-3G_SINGLET":{
+    "atoms": ["C", "H", "H"],
+    "bond_len":1.9241,
+    "coords":[  [0.0000000,	0.0000000,	0.1238210],
+                [0.0000000,	0.9620540,	-0.3714630],
+                [0.0000000,	-0.9620540,	-0.3714630]],
+    "multiplicity":3,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"BeH2_STO-3G_SINGLET":{
+    "atoms": ["Be", "H", "H"],
+    "bond_len":1.2906,
+    "coords":[  [0.0000000,	0.0000000,	0.0000000],
+                [0.0000000,	0.0000000,	1.2905500],
+                [0.0000000,	0.0000000,	-1.2905500]],
+    "multiplicity":1,
+    "charge":0,
     "basis":"sto-3g"
     }
 }

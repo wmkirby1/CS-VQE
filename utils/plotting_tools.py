@@ -114,7 +114,7 @@ def plot_cs_vqe_convergence(data, title):
                 shadow=True,
                 prop={'size': 15})
 
-    fig.suptitle(title, fontsize=20, y=0.96)
+    #fig.suptitle(title, fontsize=20, y=0.96)
     
     return fig
 
@@ -194,6 +194,6 @@ def plot_cs_vqe_convergence_alt(data, title):
                 shadow=True,
                 prop={'size': 15})
 
-    fig.suptitle(title, fontsize=20, y=0.96)
+    #fig.suptitle(title, fontsize=20, y=0.96)
     
     return fig
