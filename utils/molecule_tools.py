@@ -19,7 +19,7 @@ from openfermion.circuits import (uccsd_singlet_get_packed_amplitudes,
 def find_tapering(ham_q, num_qubits, taper_num):
     full_energy = get_ground_state(get_sparse_operator(ham_q, num_qubits))[0]
     n_q_tap = num_qubits-taper_num
-    single_Z = ['Z'+str(i) for i in range(num_qubits)]
+    single_Z = ['X'+str(i) for i in range(num_qubits)]
     taper_stabs = [[QubitOperator(z) for z in Z_stab] for Z_stab in combinations(single_Z, taper_num)]
 
     taper_results=[]
