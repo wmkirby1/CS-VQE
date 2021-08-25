@@ -183,7 +183,7 @@
     "atoms": ["O"],
     "bond_len":0,
     "coords":[[0,0,0]],
-    "multiplicity":3,
+    "multiplicity":1,
     "charge":0,
     "basis":"sto-3g"
     },
