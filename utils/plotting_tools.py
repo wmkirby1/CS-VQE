@@ -119,19 +119,43 @@ def plot_cs_vqe_convergence(data, title):
     return fig
 
 
-def plot_cs_vqe_convergence_alt(data, title):
+def plot_cs_vqe_convergence_alt(data, title=None, max_num_plots=None,x=None,y=None,plot_index=None):
     """
     """
-    fig, axs = plt.subplots(nrows = data['rows'], ncols = data['cols'], figsize = (6*data['cols'],6*data['rows']))
-
-    for index, grid in enumerate(data['grid_pos']):
-        if type(grid) != tuple:
-            grid_ref = str(tuple(grid))
-            grid = tuple(map(int, grid_ref[1:-1].split(', ')))
+    if max_num_plots is not None:
+        if (x is None) and (y is None):
+            y, x = factor_int(max_num_plots)
+        if y==1:
+            grids = list(range(max_num_plots))
         else:
-            grid_ref = grid
+            grids = list(itertools.product(range(y), range(x)))
+        if plot_index is None:
+            grid_map = data['grid_pos'][-max_num_plots:]
+        else:
+            grid_map = data['grid_pos']
+    else:
+        x = data['cols']
+        y = data['rows']
+        grids = data['grid_pos']
+    fig, axs = plt.subplots(nrows = y, ncols = x, figsize = (6*x,6*y))
 
-        vqe_result = data[grid_ref]
+    for index, grid in enumerate(grids):
+        if max_num_plots is None:
+            if type(grid) != tuple:
+                grid_ref = str(tuple(grid))
+                grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
+            else:
+                grid_ref = grid
+        else:
+            if plot_index is None:
+                grid_ref = str(tuple(grid_map[index]))
+                grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
+            else:
+                i = plot_index[index]
+                grid_ref = str(tuple(grid_map[i]))
+                grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
+
+        vqe_result = data[str(grid_ref)]
         
         X = vqe_result['counts']
         Y = vqe_result['values']
@@ -166,18 +190,23 @@ def plot_cs_vqe_convergence_alt(data, title):
 
         #axs[grid].set_xticks(X)
         if vqe_result['num_sim_q'] == data['num_qubits']:
-            axs[grid].set_title("Full VQE")
+            axs[grid].set_title("Full VQE", fontsize=18)
         else:  
-            axs[grid].set_title("Simulating %i/%i qubits" % (vqe_result['num_sim_q'], data['num_qubits']))
+            axs[grid].set_title("Simulating %i/%i qubits" % (vqe_result['num_sim_q'], data['num_qubits']),fontsize=18)
         #axs[grid].set_xticklabels([])
         
         if data['rows'] != 1:
-            if grid[0] == data['rows']-1:
-                axs[grid].set_xlabel('Optimisation count',fontsize=16)
-            if grid[1] == 0:
-                axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
+            if y==1:
+                axs[grid].set_xlabel('Optimisation count',fontsize=18)
+                if grid==0:
+                    axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
+            else:
+                if grid[0] == y-1:
+                    axs[grid].set_xlabel('Optimisation count',fontsize=18)
+                if grid[1] == 0:
+                    axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
         else:
-            axs[grid].set_xlabel('Optimisation count',fontsize=16)
+            axs[grid].set_xlabel('Optimisation count',fontsize=18)
             if grid == 0:
                 axs[grid].set_ylabel('Energy (Ha)',fontsize=18)
 
@@ -189,10 +218,10 @@ def plot_cs_vqe_convergence_alt(data, title):
                 loc="lower center",   # Position of legend
                 borderaxespad=0.1,    # Small spacing around legend box
                 ncol=3,
-                bbox_to_anchor=(0.5, -0.02),
+                bbox_to_anchor=(0.5, -0.01),
                 fancybox=True, 
                 shadow=True,
-                prop={'size': 15})
+                prop={'size': 18})
 
     #fig.suptitle(title, fontsize=20, y=0.96)
     

@@ -201,7 +201,7 @@
     "coords":[  [0.0000000,	0.0000000,	0.1238210],
                 [0.0000000,	0.9620540,	-0.3714630],
                 [0.0000000,	-0.9620540,	-0.3714630]],
-    "multiplicity":3,
+    "multiplicity":1,
     "charge":0,
     "basis":"sto-3g"
     },
@@ -211,6 +211,30 @@
     "coords":[  [0.0000000,	0.0000000,	0.0000000],
                 [0.0000000,	0.0000000,	1.2905500],
                 [0.0000000,	0.0000000,	-1.2905500]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"B_STO-3G_SINGLET":{
+    "atoms": ["B"],
+    "bond_len":0,
+    "coords":[[0,0,0]],
+    "multiplicity":2,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"Be_STO-3G_SINGLET":{
+    "atoms": ["Be"],
+    "bond_len":0,
+    "coords":[[0,0,0]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"sto-3g"
+    },
+"C_STO-3G_SINGLET":{
+    "atoms": ["C"],
+    "bond_len":0,
+    "coords":[[0,0,0]],
     "multiplicity":1,
     "charge":0,
     "basis":"sto-3g"
