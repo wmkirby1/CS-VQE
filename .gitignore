@@ -3,3 +3,6 @@
 *.pyc
 *.txt
 tmp*
+new
+new.pub
+.hdf5

@@ -1,0 +1,28 @@
+apiVersion: io.orquestra.workflow/1.0.0
+name: cs-vqe-test
+
+imports:
+- name: cs-vqe-component
+  type: git
+  parameters:
+    repository: "https://github.com/TimWeaving/CS-VQE.git"
+    branch: "sandbox"
+
+steps:
+- name: run-cs-vqe
+  config:
+    runtime:
+      language: python3
+      imports: [cs-vqe-component]
+      parameters:
+        file: cs-vqe-component/steps/cs_vqe_test.py
+        function: cs_vqe_test
+  inputs:
+    - speciesname: 'H3+_STO-3G_SINGLET'
+      type: string
+  outputs:
+  - name: result
+    type: output
+
+types:
+ - output

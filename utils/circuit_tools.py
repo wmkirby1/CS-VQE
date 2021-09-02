@@ -96,9 +96,9 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     
     # apply the rotation
     if control is None:
-        circ.rz(2*rot, non_I[-1])
+        circ.rz(-2*rot, non_I[-1])
     else:
-        circ.crz(2*rot, control, non_I[-1])
+        circ.crz(-2*rot, control, non_I[-1])
         
     # reverse cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:

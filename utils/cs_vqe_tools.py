@@ -742,12 +742,12 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
 
     rotations, diagonal_set, vals = diagonalize_epistemic(model,fn_form,ep_state,rot_A)
 
-    if rot_A:
-        diagonal_set = diagonal_set[0:-1]
-        vals = vals[0:-1]
-    #print(diagonal_set, vals)
+    #if rot_A:
+    #    diagonal_set = diagonal_set[0:-1]
+    #    vals = vals[0:-1]
+
     n_q = len(diagonal_set[0])
-    
+    #print(diagonal_set, vals)
     order_len = len(order)
     
     vals = list(vals)
@@ -809,6 +809,7 @@ def get_reduced_hamiltonians(ham,model,fn_form,ep_state,order,rot_A=False):
                     ham_red[t_red] = ham_rotated[t]*sgn
 
         z_complement = list(set(range(n_q))-set(z_indices))
+        #print(z_complement)
         for i in z_complement:
             if i not in sim_indices:
                 sim_indices.append(i)

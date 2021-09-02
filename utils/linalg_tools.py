@@ -73,20 +73,47 @@ def eigenstate_projector(A, num_qubits, eval=+1):
     return np.matrix(projector)
 
 
-def noncon_projector(nc_state, Z_indices, num_qubits):
+def noncon_projector(nc_state, sim_indices, num_qubits):
     """
     """
-    num_gen_rem = len(Z_indices)
-    Z_complement = list(set(range(num_qubits)) - set(Z_indices))
-    fixed_qubits = [nc_state[i] for i in Z_complement]
-    fixed_index = bit.bin_to_int(''.join(fixed_qubits))
-    fixed_state = np.array([0 for i in range(2**(num_qubits-num_gen_rem))])
-    fixed_state[fixed_index] = 1
-    a = np.identity(2**num_gen_rem)
-    b = np.outer(fixed_state, fixed_state)
-    projector = np.kron(a, b)
+    projector = 1
 
-    return projector
+    for i in range(num_qubits):
+        if i in sim_indices:
+            tensor_factor = np.identity(2)
+        else:
+            nc_index = int(nc_state[i])
+            basis_state = np.zeros(2)
+            basis_state[nc_index] = 1
+            tensor_factor = np.outer(basis_state, basis_state)
+        projector = np.kron(projector, tensor_factor)
+    
+    return np.matrix(projector)
+
+
+def pauli_matrix(pauli):
+    num_qubits = len(pauli)
+    single_paulis ={'I': np.matrix(np.identity(num_qubits)),
+                    'X': np.matrix([[0, 1],
+                                    [1, 0]]),
+                    'Y': np.matrix([[0,-1.j],
+                                    [1.j, 0]]),
+                    'Z': np.matrix([[1, 0],
+                                    [0,-1]])}
+    
+    pauli_matrix = 1
+    for p in pauli:
+        pauli_matrix = np.kron(pauli_matrix, single_paulis[p])
+
+    return pauli_matrix
+
+
+def exp_pauli(pauli, param):
+    num_qubits = len(pauli)
+    I_mat = np.matrix(np.identity(2**num_qubits))
+    p_mat = pauli_matrix(pauli)
+
+    return np.cos(param)*I_mat + 1.j*np.sin(param)*p_mat
 
 
 def apply_projections(psi, proj_list=[]):
