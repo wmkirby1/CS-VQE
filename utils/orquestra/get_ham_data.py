@@ -2,7 +2,7 @@ import json
 
 def get_ham_data(speciesname):
     file = 'ham_data'
-    with open(file+'.json', 'r') as json_file:
+    with open('utils/'+file+'.json', 'r') as json_file:
         ham_data = json.load(json_file)
 
     ham   = ham_data[speciesname]['ham']
