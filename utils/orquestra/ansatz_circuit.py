@@ -5,8 +5,8 @@ from zquantum.core.circuits import (
     load_circuitset,
     save_circuit,
     save_circuitset,
+    import_from_qiskit
 )
-from zquantum.core.circuits.conversions.qiskit_conversions import import_from_qiskit 
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
     
