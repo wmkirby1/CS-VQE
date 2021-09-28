@@ -1,8 +1,6 @@
 import utils.cs_vqe_tools as cs_tools
-from utils.json_tools import *
+from zquantum.core import save_list
 
 def extract_noncon(ham, search_time=10, criterion='weight'):
     terms_noncon = cs_tools.greedy_dfs(ham, search_time, criterion)[-1]
-    #data_dict = {}
-    #data_dict['noncon'] = terms_noncon
-    #save_json(data_dict, 'noncon.json')
+    save_list(terms_noncon, 'terms_noncon.json')
