@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_namespace_packages(
         include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "openfermionpyscf", "openfermion", "cirq"]),
     package_data={
-        "": ["hamiltonians/*.json"],
+        "": ["*.json"],
     },
     classifiers=[
         "Programming Language :: Python :: 3",
