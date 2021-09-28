@@ -69,6 +69,7 @@ class cs_vqe:
         dict
             Dictionary of noncontextual Hamiltnonian terms (Pauli strings) and corresponding coefficients
         """
+        print(self.terms_noncon)
         return {t:self.ham[t] for t in self.terms_noncon}
 
 
