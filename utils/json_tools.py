@@ -10,7 +10,7 @@ def save_json(result, filename) -> None:
     """
     Saves data as JSON.
     Args:
-        result (ditc): of data to save.
+        result (dict): of data to save.
         filenames (str): file name to save the data in
             (should have a '.json' extension).
     """
