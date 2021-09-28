@@ -39,7 +39,7 @@ steps:
   config:
     runtime:
       language: python3
-      imports: [cs-vqe-component]
+      imports: [z-quantum-core, cs-vqe-component]
       parameters:
         file: cs-vqe-component/utils/orquestra/extract_noncon.py
         function: extract_noncon
