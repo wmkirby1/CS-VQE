@@ -84,11 +84,11 @@
     "basis":"6-311g"
     },
 "H2O_STO-3G_SINGLET":{
-    "atoms": ["H", "H", "O"],
+    "atoms": ["O", "H", "H"],
     "bond_len":0.958,
-    "coords":[ [0.0000000,0.0000000,0.1271610],
-               [0.0000000,0.7580820,-0.5086420],
-               [0.0000000,-0.7580820,-0.5086420]],
+    "coords":[ [0,0,0],
+               [0.952519,0,0],
+               [-0.246530058,0.9200627021,0]],
     "multiplicity":1,
     "charge":0,
     "basis":"sto-3g"
@@ -137,14 +137,6 @@
     "charge":1,
     "basis":"sto-3g"
     },    
-"Ne_STO-3G_SINGLET":{
-    "atoms": ["Ne"],
-    "bond_len":0,
-    "coords":[[0,0,0]],
-    "multiplicity":1,
-    "charge":0,
-    "basis":"sto-3g"
-    },
 "N+_STO-3G_SINGLET":{
     "atoms": ["N"],
     "bond_len":0,
@@ -171,27 +163,11 @@
     "charge":0,
     "basis":"sto-3g"
     },
-"Li_STO-3G_SINGLET":{
-    "atoms": ["Li"],
-    "bond_len":0,
-    "coords":[[0,0,0]],
-    "multiplicity":2,
-    "charge":0,
-    "basis":"sto-3g"
-    },
 "O_STO-3G_SINGLET":{
     "atoms": ["O"],
     "bond_len":0,
     "coords":[[0,0,0]],
     "multiplicity":1,
-    "charge":0,
-    "basis":"sto-3g"
-    },
-"N_STO-3G_SINGLET":{
-    "atoms": ["N"],
-    "bond_len":0,
-    "coords":[[0,0,0]],
-    "multiplicity":4,
     "charge":0,
     "basis":"sto-3g"
     },
@@ -212,14 +188,6 @@
                 [0.0000000,	0.0000000,	1.2905500],
                 [0.0000000,	0.0000000,	-1.2905500]],
     "multiplicity":1,
-    "charge":0,
-    "basis":"sto-3g"
-    },
-"B_STO-3G_SINGLET":{
-    "atoms": ["B"],
-    "bond_len":0,
-    "coords":[[0,0,0]],
-    "multiplicity":2,
     "charge":0,
     "basis":"sto-3g"
     },

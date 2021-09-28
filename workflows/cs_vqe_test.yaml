@@ -6,23 +6,29 @@ imports:
   type: git
   parameters:
     repository: "https://github.com/TimWeaving/CS-VQE.git"
-    branch: "sandbox"
+    branch: "dev"
 
 steps:
-- name: run-cs-vqe
+- name: get-ham-data
   config:
     runtime:
       language: python3
       imports: [cs-vqe-component]
       parameters:
-        file: cs-vqe-component/steps/cs_vqe_test.py
-        function: cs_vqe_test
+        file: cs-vqe-component/utils/orquestra/get_ham_data.py
+        function: get_ham_data
   inputs:
     - speciesname: 'H3+_STO-3G_SINGLET'
       type: string
   outputs:
-  - name: result
-    type: output
+  - name: speciesname
+    type: string
+  - name: ham
+    type: dict
+  - name: uccsd
+    type: dict
+  - name: num_qubits
+    type: int
 
 types:
- - output
+ - dict
