@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/TimWeaving/CS-VQE",
     packages=setuptools.find_namespace_packages(
-        include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "openfermionpyscf", "openfermion", "cirq"]),
+        include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "openfermionpyscf", "openfermion", "cirq"])+['hamiltonians'],
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
