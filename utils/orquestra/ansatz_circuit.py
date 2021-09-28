@@ -3,7 +3,8 @@ from qusetta import Qiskit
 from zquantum.core.circuits import (save_circuit,import_from_cirq)
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
-    print(terms_noncon)
+    print(terms_noncon, type(terms_noncon))
+    print('-------------------------checkpoint--------------------------')
     mol_circ = cs_circ.cs_vqe_circuit(hamiltonian=ham,
                                     terms_noncon=terms_noncon,
                                     num_qubits=num_qubits)
