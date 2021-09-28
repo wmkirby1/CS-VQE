@@ -14,9 +14,7 @@ setuptools.setup(
     url="https://github.com/TimWeaving/CS-VQE",
     packages=setuptools.find_namespace_packages(
         include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "openfermionpyscf", "openfermion", "cirq"]),
-    package_data={
-        "": ["*.json"],
-    },
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent"],
