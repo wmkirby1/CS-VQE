@@ -16,7 +16,7 @@ setuptools.setup(
         include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "openfermionpyscf", "openfermion", "cirq"]),
     package_data={
         "": ["hamiltonians/*.json"],
-    }
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent"],
