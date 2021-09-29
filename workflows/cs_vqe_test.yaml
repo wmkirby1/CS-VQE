@@ -7,6 +7,11 @@ imports:
   parameters:
     repository: "git@github.com:zapatacomputing/z-quantum-core.git"
     branch: "dev"
+- name: qe-qiskit
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-qiskit.git"
+    branch: "dev"
 - name: cs-vqe-component
   type: git
   parameters:
@@ -55,7 +60,7 @@ steps:
   config:
     runtime:
       language: python3
-      imports: [z-quantum-core, cs-vqe-component]
+      imports: [z-quantum-core, qe-qiskit, cs-vqe-component]
       parameters:
         file: cs-vqe-component/utils/orquestra/ansatz_circuit.py
         function: ansatz_circuit
