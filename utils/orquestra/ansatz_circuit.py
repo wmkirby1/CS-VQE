@@ -1,9 +1,10 @@
 import json
 import cs_vqe_classes.cs_vqe_circuit as cs_circ
+import utils.qonversion_tools as qonvert
 from qeqiskit.conversions import import_from_qiskit
 from zquantum.core.circuits import save_circuit
 from zquantum.core.openfermion import save_qubit_operator
-from zquantum.core.openfermion._io import convert_dict_to_qubitop
+#from zquantum.core.openfermion._io import convert_dict_to_qubitop
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
 
@@ -16,8 +17,8 @@ def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
 
     # output reduced Hamiltonian
     ham_red = (mol_circ.ham_reduced)[num_sim_q]
-    ham_red_zq = convert_dict_to_qubitop(ham_red)
-    save_qubit_operator(ham_red_zq, "ham_red.json")
+    ham_red_q = qonvert.dict_to_QubitOperator(ham_red)
+    save_qubit_operator(ham_red_q, "ham_red.json")
     
     # output Ansatz circuit
     anz_circ = mol_circ.build_circuit(anz_op, num_sim_q)
