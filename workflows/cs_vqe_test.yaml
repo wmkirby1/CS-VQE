@@ -91,6 +91,8 @@ steps:
     - num_sim_q: 3
       type: int
   outputs:
+  - name: ham_red
+    type: qubit-operator
   - name: ansatz_circuit
     type: circuit
 
@@ -108,12 +110,12 @@ steps:
     #  memory: "1Gi"
     #  disk: "10Gi"
   inputs:
+    - target_operator: ((ansatz-circuit.ham_red))
+      type: qubit-operator
     - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
       type: circuit
-    - target_operator: ((transform-hamiltonian.transformed-operator))
-      type: qubit-operator
-    - initial_parameters: ((generate-random-ansatz-params.params))
-      type: ansatz-params
+    - initial_parameters: [0,0,0]
+      type: list
     - backend_specs:
         module_name: qeforest.simulator
         function_name: ForestSimulator
