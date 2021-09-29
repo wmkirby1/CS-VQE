@@ -5,11 +5,11 @@ import cs_vqe_classes.cs_vqe_circuit as cs_circ
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
     print('-------------------------checkpoint--------------------------')
-    print(list(terms_noncon), type(terms_noncon))
-    try:
-        print(json.load(terms_noncon))
-    except:
-        print("Could not parse json")
+    with open(terms_noncon, 'r') as json_file:
+        terms_noncon = json.load(json_file)
+    
+    print(terms_noncon, type(terms_noncon))
+
     print('-------------------------checkpoint--------------------------')
     mol_circ = cs_circ.cs_vqe_circuit(hamiltonian=ham,
                                     terms_noncon=terms_noncon,
