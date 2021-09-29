@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/TimWeaving/CS-VQE",
     packages=setuptools.find_namespace_packages(
-        include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "scikit-quant", "openfermion"]),
+        include=["utils", "cs_vqe_classes", "hamiltonians", "steps", "scikit-quant", "openfermion", "cirq"]),
     package_data={'utils': ['*.json']},
     include_package_data=True,
     classifiers=[
@@ -21,5 +21,6 @@ setuptools.setup(
         "Operating System :: OS Independent"],
     setup_requires=["setuptools_scm~=6.0"],
     install_requires=['scikit-quant @ https://github.com/scikit-quant/scikit-quant/tarball/master#egg=scikit-quant-0.7.0',
-                    'openfermion==1.0.1']
+                    'openfermion==1.0.1',
+                    'cirq==0.10.0']
 )
