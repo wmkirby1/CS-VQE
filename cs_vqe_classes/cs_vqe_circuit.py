@@ -285,7 +285,7 @@ class cs_vqe_circuit():
             sgn *= new_sgn
 
         drop_pauli = ''.join([prod[i] for i in sim_indices])
-        print(drop_pauli)
+        #print(drop_pauli)
         if set(drop_pauli) != {'I'}:
             self.red_anz_drop = True
             proj_anz[drop_pauli] = 0
