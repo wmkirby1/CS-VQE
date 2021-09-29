@@ -35,6 +35,22 @@ from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.test.mock import FakeVigo
 
+
+def jw_configuration_state(occupied_orbitals, n_qubits):
+    """Function to produce a basis state in the occupation number basis.
+    Args:
+        occupied_orbitals(list): A list of integers representing the indices
+            of the occupied orbitals in the desired basis state
+        n_qubits(int): The total number of qubits
+    Returns:
+        basis_vector(sparse): The basis state as a sparse matrix
+    """
+    one_index = sum(2**(n_qubits - 1 - i) for i in occupied_orbitals)
+    basis_vector = np.zeros(2**n_qubits, dtype=float)
+    basis_vector[one_index] = 1
+    return basis_vector
+
+
 class cs_vqe_circuit():
     """
     """
