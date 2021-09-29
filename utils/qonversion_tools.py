@@ -1,9 +1,10 @@
-from openfermion.ops import QubitOperator
+#from openfermion.ops import QubitOperator
 from qiskit.quantum_info.operators.symplectic.pauli import Pauli
 from qiskit.aqua.operators.legacy import WeightedPauliOperator
 from qiskit.opflow.primitive_ops import PauliOp
 
-
+# commented out due to incompatible versions of Cirq and OpenFermion in Orquestra
+"""
 def QubitOperator_to_dict(op, num_qubits):
     assert(type(op) == QubitOperator)
     op_dict = {}
@@ -32,6 +33,7 @@ def dict_to_QubitOperator(op):
         out += QubitOperator(p_str, op[p])
     
     return out
+"""
 
 def WeightedPauliOperator_to_dict(op):
     assert(type(op) == WeightedPauliOperator)

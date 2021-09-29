@@ -19,11 +19,10 @@ from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS
                                                 NFT, IMFIL, BOBYQA, SNOBFIT)
 from qiskit.algorithms import VQE
 from qiskit import Aer
-from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state, jw_configuration_state
+from openfermion.linalg import get_ground_state, jw_configuration_state
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pylab
 
 from qiskit import Aer
 from qiskit.utils import QuantumInstance, algorithm_globals
@@ -151,10 +150,12 @@ class cs_vqe_circuit():
             ref_string = ''.join([str(i) for i in blank_state])
 
         else:
-            ham_q = qonvert.dict_to_QubitOperator(input_ham)
+            #ham_q = qonvert.dict_to_QubitOperator(input_ham)
+            ham_mat = qonvert.dict_to_WeightedPauliOperator(input_ham).to_matrix()
+            gs_vec = get_ground_state(ham_mat)[1]
             n_q = len(list(input_ham.keys())[0])
-            gs = get_ground_state(get_sparse_operator(ham_q, n_q).toarray())
-            gs_vec = gs[1]
+            #gs = get_ground_state(get_sparse_operator(ham_q, n_q).toarray())
+            #gs_vec = gs[1]
             amp_list = [abs(a)**2 for a in list(gs_vec)]
             sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
             sig_amp_list.reverse()
