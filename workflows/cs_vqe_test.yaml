@@ -114,8 +114,8 @@ steps:
       type: qubit-operator
     - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
       type: circuit
-    - initial_parameters: [0,0]
-      type: list
+    #- initial_parameters: [0,0]
+    #  type: list
     - backend_specs:
         module_name: qeforest.simulator
         function_name: ForestSimulator
@@ -130,15 +130,15 @@ steps:
     #    module_name: zquantum.core.estimation
     #    function_name: estimate_expectation_values_by_averaging
     #  type: specs
-    #- estimation_preprocessors_specs:
-    #  - module_name: zquantum.core.estimation 
-    #    function_name: group_greedily
-    #  - module_name: zquantum.core.estimation 
-    #    function_name: perform_context_selection
-    #  - module_name: zquantum.core.estimation 
-    #    function_name: allocate_shots_uniformly
-    #    number_of_shots: 10000
-    #  type: specs  
+    - estimation_preprocessors_specs:
+      - module_name: zquantum.core.estimation 
+        function_name: group_greedily
+      - module_name: zquantum.core.estimation 
+        function_name: perform_context_selection
+      - module_name: zquantum.core.estimation 
+        function_name: allocate_shots_uniformly
+        number_of_shots: 10000
+      type: specs  
   outputs:
     - name: optimization-results
       type: opt-results
