@@ -6,12 +6,12 @@ imports:
   type: git
   parameters:
     repository: "git@github.com:zapatacomputing/z-quantum-core.git"
-    branch: "dev"
+    branch: "master"
 - name: qe-qiskit
   type: git
   parameters:
     repository: "git@github.com:zapatacomputing/qe-qiskit.git"
-    branch: "dev"
+    branch: "master"
 - name: cs-vqe-component
   type: git
   parameters:
@@ -130,15 +130,15 @@ steps:
     #    module_name: zquantum.core.estimation
     #    function_name: estimate_expectation_values_by_averaging
     #  type: specs
-    - estimation_preprocessors_specs:
-      #- module_name: zquantum.core.estimation 
-      #  function_name: group_greedily
-      #- module_name: zquantum.core.estimation 
-      #  function_name: perform_context_selection
-      - module_name: zquantum.core.estimation 
-        function_name: allocate_shots_uniformly
-        number_of_shots: 1000
-      type: specs  
+    #- estimation_preprocessors_specs:
+    #  - module_name: zquantum.core.estimation 
+    #    function_name: group_greedily
+    #  - module_name: zquantum.core.estimation 
+    #    function_name: perform_context_selection
+    #  - module_name: zquantum.core.estimation 
+    #    function_name: allocate_shots_uniformly
+    #    number_of_shots: 1000
+    #  type: specs  
   outputs:
     - name: optimization-results
       type: opt-results
