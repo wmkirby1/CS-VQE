@@ -14,4 +14,4 @@ def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
 
     anz_circ = mol_circ.build_circuit(anz_op, num_sim_q)
     anz_circ_zq = import_from_qiskit(anz_circ)
-    save_circuit(anz_circ_zq, "circuit.json")
+    save_circuit(anz_circ_zq, "ansatz_circuit.json")

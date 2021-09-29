@@ -17,6 +17,21 @@ imports:
   parameters:
     repository: "https://github.com/TimWeaving/CS-VQE.git"
     branch: "dev"
+- name: qe-forest
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-forest.git"
+    branch: "master"
+- name: z-quantum-optimizers
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-optimizers.git"
+    branch: "master"
+- name: z-quantum-vqe
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-vqe.git"
+    branch: "master"
 
 steps:
 #- name: get-ham-data
@@ -76,12 +91,62 @@ steps:
     - num_sim_q: 3
       type: int
   outputs:
-  - name: circuit
+  - name: ansatz_circuit
     type: circuit
 
+- name: optimize-circuit
+  passed: [ansatz-circuit]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, z-quantum-optimizers, qe-forest, z-quantum-vqe]
+      parameters:
+        file: z-quantum-core/steps/optimize.py
+        function: optimize_parametrized_circuit_for_ground_state_of_operator
+    #resources:
+    #  cpu: "1000m"
+    #  memory: "1Gi"
+    #  disk: "10Gi"
+  inputs:
+    - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
+      type: circuit
+    - target_operator: ((transform-hamiltonian.transformed-operator))
+      type: qubit-operator
+    - initial_parameters: ((generate-random-ansatz-params.params))
+      type: ansatz-params
+    - backend_specs:
+        module_name: qeforest.simulator
+        function_name: ForestSimulator
+        device_name: wavefunction-simulator
+      type: specs
+    - optimizer_specs:
+        module_name: zquantum.optimizers.scipy_optimizer
+        function_name: ScipyOptimizer
+        method: L-BFGS-B
+      type: specs
+    - estimation_method_specs:
+        module_name: zquantum.core.estimation
+        function_name: estimate_expectation_values_by_averaging
+      type: specs
+    - estimation_preprocessors_specs:
+      - module_name: zquantum.core.estimation 
+        function_name: group_greedily
+      - module_name: zquantum.core.estimation 
+        function_name: perform_context_selection
+      - module_name: zquantum.core.estimation 
+        function_name: allocate_shots_uniformly
+        number_of_shots: 10000
+      type: specs  
+  outputs:
+    - name: optimization-results
+      type: opt-results
+    - name: optimized-parameters
+      type: ansatz-params
 
 types:
  - data_type
  - dict
  - list
  - circuit
+ - opt-results
+ - ansatz-params
