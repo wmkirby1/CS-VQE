@@ -88,7 +88,7 @@ steps:
       type: dict
     - num_qubits: 6
       type: int
-    - num_sim_q: 3
+    - num_sim_q: 4
       type: int
   outputs:
   - name: ham_red
