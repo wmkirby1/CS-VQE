@@ -1,7 +1,7 @@
 import json
 import cs_vqe_classes.cs_vqe_circuit as cs_circ
 #from qusetta import Qiskit
-from zquantum.core.circuits import (save_circuit,import_from_cirq)
+from zquantum.core.circuits import (save_circuit)
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
     print('-------------------------checkpoint--------------------------')
