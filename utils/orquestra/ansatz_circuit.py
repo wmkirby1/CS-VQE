@@ -5,7 +5,7 @@ import cs_vqe_classes.cs_vqe_circuit as cs_circ
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
     print('-------------------------checkpoint--------------------------')
-    print(terms_noncon, type(terms_noncon))
+    print(terms_noncon['list'], type(terms_noncon))
     try:
         print(json.load(terms_noncon))
     except:
