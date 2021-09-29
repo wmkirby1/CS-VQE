@@ -55,7 +55,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     # initiate quantum circuit object
     if circ is None:
         circ = QuantumCircuit(num_qubits)
-        circ.barrier()
+        #circ.barrier()
     
     # rotate X and Y Paulis into Z basis
     for q in p_index.keys():
@@ -122,7 +122,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
         else:
             pass
         
-    circ.barrier()
+    #circ.barrier()
     
     return circ
 
