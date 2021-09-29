@@ -101,7 +101,7 @@ steps:
   config:
     runtime:
       language: python3
-      imports: [z-quantum-core, z-quantum-optimizers, qe-forest, z-quantum-vqe]
+      imports: [z-quantum-core, z-quantum-optimizers, qe-forest, z-quantum-vqe, cs-vqe-component]
       parameters:
         file: cs-vqe-component/utils/orquestra/optimize.py
         function: optimize_parametrized_circuit_for_ground_state_of_operator
@@ -114,7 +114,7 @@ steps:
       type: qubit-operator
     - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
       type: circuit
-    - initial_parameters: [0,0,0]
+    - initial_parameters: [0,0]
       type: list
     - backend_specs:
         module_name: qeforest.simulator
