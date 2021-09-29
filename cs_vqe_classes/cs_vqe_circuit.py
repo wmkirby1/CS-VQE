@@ -19,7 +19,7 @@ from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS
                                                 NFT, IMFIL, BOBYQA, SNOBFIT)
 from qiskit.algorithms import VQE
 from qiskit import Aer
-from openfermion.linalg import get_ground_state, jw_configuration_state
+#from openfermion.linalg import get_ground_state, jw_configuration_state
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -152,7 +152,7 @@ class cs_vqe_circuit():
         else:
             #ham_q = qonvert.dict_to_QubitOperator(input_ham)
             ham_mat = qonvert.dict_to_WeightedPauliOperator(input_ham).to_matrix()
-            gs_vec = get_ground_state(ham_mat)[1]
+            gs_vec = la.get_ground_state(ham_mat)[1]
             n_q = len(list(input_ham.keys())[0])
             #gs = get_ground_state(get_sparse_operator(ham_q, n_q).toarray())
             #gs_vec = gs[1]
@@ -288,7 +288,7 @@ class cs_vqe_circuit():
         """
         ham_red = self.ham_reduced[num_sim_q]
         ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
-        gs_vector = get_ground_state(ham_mat)[1]
+        gs_vector = la.get_ground_state(ham_mat)[1]
         qc.initialize(gs_vector)
 
 
@@ -580,7 +580,7 @@ class cs_vqe_circuit():
 
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(input_ham)
-        gs_red = get_ground_state(vqe_input_ham.to_matrix())
+        gs_red = la.get_ground_state(vqe_input_ham.to_matrix())
         target_energy = gs_red[0]
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)
 
@@ -592,7 +592,7 @@ class cs_vqe_circuit():
         ham_mat = np.matrix(vqe_input_ham.to_matrix())
         eig_mat = np.matrix(la.eigenstate_projector(A_red, dim))
         ham_proj = eig_mat*ham_mat*eig_mat.H
-        proj_energy = get_ground_state(ham_proj)[0]
+        proj_energy = la.get_ground_state(ham_proj)[0]
 
         return {'num_sim_q':num_sim_q,
                 'sim_qubits':sim_qubits,

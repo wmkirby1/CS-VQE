@@ -1,6 +1,7 @@
 import utils.cs_vqe_tools as c
 import utils.qonversion_tools as qonvert
-from openfermion.linalg import get_ground_state
+#from openfermion.linalg import get_ground_state
+import utils.linalg_tools as la
 from copy import deepcopy
 import numpy as np
 import itertools
@@ -273,7 +274,7 @@ class cs_vqe:
             #ham_q = qonvert.dict_to_QubitOperator(self.ham)
             ham_mat = qonvert.dict_to_WeightedPauliOperator(self.ham).to_matrix()
             
-        gs = get_ground_state(ham_mat)
+        gs = la.get_ground_state(ham_mat)
 
         return gs
 
