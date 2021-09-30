@@ -73,6 +73,7 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
             parametrized_circuit = new_circuits.circuit_from_dict(circ_json)
     print('------------- checkpoint 2 --------------')
 
+    # [Errno 22] Invalid argument
     if isinstance(backend_specs, str):
         backend_specs = json.loads(backend_specs)
     backend = create_object(backend_specs)
@@ -122,9 +123,13 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
         parameter_precision_seed=parameter_precision_seed,
     )
 
+    print('------------- checkpoint 7 --------------')
+
     optimization_results = optimizer.minimize(
         cost_function, initial_parameters, keep_history
     )
+
+    print('------------- checkpoint 8 --------------')
 
     save_optimization_results(optimization_results, "optimization-results.json")
     save_array(optimization_results.opt_params, "optimized-parameters.json")
