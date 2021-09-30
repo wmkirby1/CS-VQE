@@ -1,10 +1,38 @@
 import utils.qonversion_tools as qonvert
 import utils.bit_tools as bit
 import cs_vqe_classes.cs_vqe_circuit as cs_circ
-from openfermion.ops import QubitOperator
-from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
+#from openfermion.ops import QubitOperator
+#from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
 import numpy as np
+import scipy
 import math
+
+
+def get_ground_state(sparse_operator, initial_guess=None):
+    """Compute lowest eigenvalue and eigenstate.
+    Args:
+        sparse_operator (LinearOperator): Operator to find the ground state of.
+        initial_guess (ndarray): Initial guess for ground state.  A good
+            guess dramatically reduces the cost required to converge.
+    Returns
+    -------
+        eigenvalue:
+            The lowest eigenvalue, a float.
+        eigenstate:
+            The lowest eigenstate in scipy.sparse csc format.
+    """
+    values, vectors = scipy.sparse.linalg.eigsh(sparse_operator,
+                                                k=1,
+                                                v0=initial_guess,
+                                                which='SA',
+                                                maxiter=1e7)
+
+    order = np.argsort(values)
+    values = values[order]
+    vectors = vectors[:, order]
+    eigenvalue = values[0]
+    eigenstate = vectors[:, 0]
+    return eigenvalue, eigenstate.T
 
 
 def factor_int(n):
@@ -50,25 +78,24 @@ def random_complex_vector(n, order=False):
 def expectation(op, state, num_qubits):
     """
     """
-    if type(op) == dict:
-        op = qonvert.dict_to_QubitOperator(op)
+    assert(type(op) == dict)
+    #if type(op) == dict:
+    #    op = qonvert.dict_to_QubitOperator(op)
     
     state = np.array(state)
-    conj_state = np.conjugate(state)
-    O = LinearQubitOperator(op, num_qubits)
+    #O = LinearQubitOperator(op, num_qubits)
+    O_mat = qonvert.dict_to_WeightedPauliOperator(op).to_matrix()
+    expect = np.conjugate(state).dot(O_mat).dot(state)
     
-    O_state = O.matvec(state)
-    expect = conj_state.dot(O_state)
-    
-    return expect
+    return expect.real
 
 
 def eigenstate_projector(A, num_qubits, eval=+1):
     """
     """
-    I_op = QubitOperator.identity()
-    A_op = qonvert.dict_to_QubitOperator(A)
-    projector = get_sparse_operator((I_op+eval*A_op)/2, n_qubits=num_qubits).toarray()
+    I_op = np.identity(2**num_qubits)
+    A_op = qonvert.dict_to_WeightedPauliOperator(A).to_matrix()
+    projector = (I_op+eval*A_op)/2
     
     return np.matrix(projector)
 
@@ -140,8 +167,9 @@ def project_hamiltonian(hamiltonian, terms_noncon, num_qubits):
 
     for n_q in qubit_nums:
         ham_red = mol.ham_reduced[n_q-1]
-        ham_red_q = qonvert.dict_to_QubitOperator(ham_red)
-        ham_mat = np.matrix(get_sparse_operator(ham_red_q, n_q).toarray())
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
+        #ham_red_q = qonvert.dict_to_QubitOperator(ham_red)
+        #ham_mat = np.matrix(get_sparse_operator(ham_red_q, n_q).toarray())
         gs_true.append(get_ground_state(ham_mat)[0])
         
         A_red = mol.reduce_anz_terms(A, n_q)

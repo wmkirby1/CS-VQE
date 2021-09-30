@@ -55,7 +55,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
     # initiate quantum circuit object
     if circ is None:
         circ = QuantumCircuit(num_qubits)
-        circ.barrier()
+        #circ.barrier()
     
     # rotate X and Y Paulis into Z basis
     for q in p_index.keys():
@@ -122,7 +122,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
         else:
             pass
         
-    circ.barrier()
+    #circ.barrier()
     
     return circ
 
@@ -147,14 +147,14 @@ def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
     """
     
     # parameters to be optimised in VQE routine
-    #if params == []:
-    #    param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
-    #    params = [] 
-    #    for comb in list(itertools.combinations(param_chars, 3)):
-    #        char_str = ''.join(comb)
-    #        params.append(Parameter(char_str))
     if params == []:
-        params = ParameterVector('P', len(paulis))
+        param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
+        params = [] 
+        for comb in list(itertools.combinations(param_chars, 3)):
+            char_str = ''.join(comb)
+            params.append(Parameter(char_str))
+    #if params == []:
+    #    params = ParameterVector('P', len(paulis))
 
     #initiate quantum state (usually Hartree Fock)
     if circ is None:

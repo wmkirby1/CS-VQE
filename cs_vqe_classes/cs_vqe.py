@@ -1,6 +1,7 @@
 import utils.cs_vqe_tools as c
 import utils.qonversion_tools as qonvert
-from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
+#from openfermion.linalg import get_ground_state
+import utils.linalg_tools as la
 from copy import deepcopy
 import numpy as np
 import itertools
@@ -69,6 +70,7 @@ class cs_vqe:
         dict
             Dictionary of noncontextual Hamiltnonian terms (Pauli strings) and corresponding coefficients
         """
+        #print(self.terms_noncon)
         return {t:self.ham[t] for t in self.terms_noncon}
 
 
@@ -265,11 +267,14 @@ class cs_vqe:
             (true gs energy, true gs eigenvector)
         """
         if not rot_override:
-            ham_q = qonvert.dict_to_QubitOperator(self.get_ham())
+            #ham_q = qonvert.dict_to_QubitOperator(self.get_ham())
+            ham_mat = qonvert.dict_to_WeightedPauliOperator(self.get_ham()).to_matrix()
+
         else:
-            ham_q = qonvert.dict_to_QubitOperator(self.ham)
+            #ham_q = qonvert.dict_to_QubitOperator(self.ham)
+            ham_mat = qonvert.dict_to_WeightedPauliOperator(self.ham).to_matrix()
             
-        gs = get_ground_state(get_sparse_operator(ham_q, self.num_qubits).toarray())
+        gs = la.get_ground_state(ham_mat)
 
         return gs
 

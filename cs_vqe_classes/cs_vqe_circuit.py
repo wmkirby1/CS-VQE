@@ -19,11 +19,10 @@ from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS
                                                 NFT, IMFIL, BOBYQA, SNOBFIT)
 from qiskit.algorithms import VQE
 from qiskit import Aer
-from openfermion.linalg import get_sparse_operator, get_ground_state, jw_hartree_fock_state, jw_configuration_state
+#from openfermion.linalg import get_ground_state, jw_configuration_state
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pylab
 
 from qiskit import Aer
 from qiskit.utils import QuantumInstance, algorithm_globals
@@ -35,6 +34,22 @@ import os
 from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.test.mock import FakeVigo
+
+
+def jw_configuration_state(occupied_orbitals, n_qubits):
+    """Function to produce a basis state in the occupation number basis.
+    Args:
+        occupied_orbitals(list): A list of integers representing the indices
+            of the occupied orbitals in the desired basis state
+        n_qubits(int): The total number of qubits
+    Returns:
+        basis_vector(sparse): The basis state as a sparse matrix
+    """
+    one_index = sum(2**(n_qubits - 1 - i) for i in occupied_orbitals)
+    basis_vector = np.zeros(2**n_qubits, dtype=float)
+    basis_vector[one_index] = 1
+    return basis_vector
+
 
 class cs_vqe_circuit():
     """
@@ -151,10 +166,12 @@ class cs_vqe_circuit():
             ref_string = ''.join([str(i) for i in blank_state])
 
         else:
-            ham_q = qonvert.dict_to_QubitOperator(input_ham)
+            #ham_q = qonvert.dict_to_QubitOperator(input_ham)
+            ham_mat = qonvert.dict_to_WeightedPauliOperator(input_ham).to_matrix()
+            gs_vec = la.get_ground_state(ham_mat)[1]
             n_q = len(list(input_ham.keys())[0])
-            gs = get_ground_state(get_sparse_operator(ham_q, n_q).toarray())
-            gs_vec = gs[1]
+            #gs = get_ground_state(get_sparse_operator(ham_q, n_q).toarray())
+            #gs_vec = gs[1]
             amp_list = [abs(a)**2 for a in list(gs_vec)]
             sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
             sig_amp_list.reverse()
@@ -268,7 +285,7 @@ class cs_vqe_circuit():
             sgn *= new_sgn
 
         drop_pauli = ''.join([prod[i] for i in sim_indices])
-        print(drop_pauli)
+        #print(drop_pauli)
         if set(drop_pauli) != {'I'}:
             self.red_anz_drop = True
             proj_anz[drop_pauli] = 0
@@ -287,7 +304,7 @@ class cs_vqe_circuit():
         """
         ham_red = self.ham_reduced[num_sim_q]
         ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
-        gs_vector = get_ground_state(ham_mat)[1]
+        gs_vector = la.get_ground_state(ham_mat)[1]
         qc.initialize(gs_vector)
 
 
@@ -325,7 +342,7 @@ class cs_vqe_circuit():
             else:
                 qc = circ.circ_from_paulis(paulis=list(anz_terms_reduced.keys()), circ=qc, trot_order=2, dup_param=False)
         else:
-            qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=True)
+            qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=False)
 
 
     def swap_entgl_block(self, qc, num_sim_q):
@@ -487,6 +504,25 @@ class cs_vqe_circuit():
         return qc
 
 
+    def init_params(self, anz_terms, num_sim_q):
+        """
+        """
+        qc = self.build_circuit(anz_terms, num_sim_q)
+
+        if anz_terms is not None:
+            anz_red, drop_pauli = self.project_anz_terms(anz_terms, num_sim_q)
+            if anz_red != {}:
+                init_anz_params = np.array([(anz_red[p]) for p in anz_red.keys() if set(p)!={'I'}])
+                if len(init_anz_params) != qc.num_parameters:
+                    init_anz_params = np.append(init_anz_params, 0)  
+            else:
+                init_anz_params = np.zeros(qc.num_parameters)
+        else:
+            drop_pauli = None
+
+        return init_anz_params
+
+
     def store_intermediate_result(self, eval_count, parameters, mean, std):
         """
         """
@@ -579,7 +615,7 @@ class cs_vqe_circuit():
 
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(input_ham)
-        gs_red = get_ground_state(vqe_input_ham.to_matrix())
+        gs_red = la.get_ground_state(vqe_input_ham.to_matrix())
         target_energy = gs_red[0]
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)
 
@@ -591,7 +627,7 @@ class cs_vqe_circuit():
         ham_mat = np.matrix(vqe_input_ham.to_matrix())
         eig_mat = np.matrix(la.eigenstate_projector(A_red, dim))
         ham_proj = eig_mat*ham_mat*eig_mat.H
-        proj_energy = get_ground_state(ham_proj)[0]
+        proj_energy = la.get_ground_state(ham_proj)[0]
 
         return {'num_sim_q':num_sim_q,
                 'sim_qubits':sim_qubits,
