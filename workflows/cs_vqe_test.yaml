@@ -6,11 +6,11 @@ imports:
   type: git
   parameters:
     repository: "https://github.com/TimWeaving/z-quantum-core.git"
-    branch: "dev_tim"
+    branch: "master"
 - name: qe-qiskit
   type: git
   parameters:
-    repository: "git@github.com:zapatacomputing/qe-qiskit.git"
+    repository: "https://github.com/TimWeaving/qe-qiskit.git"
     branch: "master"
 - name: cs-vqe-component
   type: git
