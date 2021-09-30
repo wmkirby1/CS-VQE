@@ -65,10 +65,13 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
 
     if isinstance(target_operator, str):
         target_operator = load_qubit_operator(target_operator)
-
+    
+    print('------------- checkpoint --------------')
     if isinstance(parametrized_circuit, str):
         with open(parametrized_circuit) as f:
+            print(json.load(f))
             parametrized_circuit = new_circuits.circuit_from_dict(json.load(f))
+    print('------------- checkpoint --------------')
 
     if isinstance(backend_specs, str):
         backend_specs = json.loads(backend_specs)
