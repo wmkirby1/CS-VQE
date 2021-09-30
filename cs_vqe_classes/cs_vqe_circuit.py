@@ -342,7 +342,7 @@ class cs_vqe_circuit():
             else:
                 qc = circ.circ_from_paulis(paulis=list(anz_terms_reduced.keys()), circ=qc, trot_order=2, dup_param=False)
         else:
-            qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=True)
+            qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=False)
 
 
     def swap_entgl_block(self, qc, num_sim_q):
