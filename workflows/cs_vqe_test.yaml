@@ -5,8 +5,8 @@ imports:
 - name: z-quantum-core
   type: git
   parameters:
-    repository: "git@github.com:zapatacomputing/z-quantum-core.git"
-    branch: "master"
+    repository: "https://github.com/TimWeaving/z-quantum-core.git"
+    branch: "dev_tim"
 - name: qe-qiskit
   type: git
   parameters:
