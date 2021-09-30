@@ -138,7 +138,7 @@ steps:
       - module_name: zquantum.core.estimation 
         function_name: allocate_shots_uniformly
         number_of_shots: 1000
-    #  type: specs  
+      type: specs  
   outputs:
     - name: optimization-results
       type: opt-results
