@@ -96,7 +96,7 @@ steps:
   - name: ansatz_circuit
     type: circuit
   - name: init_params
-    type: list
+    type: ansatz-params
 
 - name: optimize-circuit
   passed: [ansatz-circuit]
@@ -117,7 +117,7 @@ steps:
     - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
       type: circuit
     - initial_parameters: ((ansatz-circuit.init_params))
-      type: list
+      type: ansatz-params
     - backend_specs:
         module_name: qeforest.simulator
         function_name: ForestSimulator

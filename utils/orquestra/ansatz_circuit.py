@@ -4,7 +4,7 @@ import utils.qonversion_tools as qonvert
 from qeqiskit.conversions import import_from_qiskit
 from zquantum.core.circuits import save_circuit
 from zquantum.core.openfermion import save_qubit_operator
-from zquantum.core.utils import save_list
+from zquantum.core import circuits, serialization
 
 
 def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
@@ -27,5 +27,5 @@ def ansatz_circuit(ham, terms_noncon, anz_op, num_qubits, num_sim_q):
     save_circuit(anz_circ_zq, "ansatz_circuit.json")
 
     # output the initial parameter values
-    init_params = list(mol_circ.init_params(anz_op, num_sim_q))
-    save_list(init_params, 'init_params.json')
+    init_params = mol_circ.init_params(anz_op, num_sim_q)
+    serialization.save_array(init_params, "init_params.json")
