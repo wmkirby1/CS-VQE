@@ -60,9 +60,10 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
     """
     if isinstance(optimizer_specs, str):
         optimizer_specs = json.loads(optimizer_specs)
-
+    print(optimizer_specs)
     optimizer = create_object(optimizer_specs)
-
+    print(help(optimizer))
+    
     if isinstance(target_operator, str):
         target_operator = load_qubit_operator(target_operator)
     
@@ -135,6 +136,7 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
     save_array(optimization_results.opt_params, "optimized-parameters.json")
 
     print('------------- done --------------')
+
 
 def optimize_ansatz_based_cost_function(
     optimizer_specs: Specs,

@@ -114,8 +114,8 @@ steps:
       type: qubit-operator
     - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
       type: circuit
-    #- initial_parameters: [0,0]
-    #  type: list
+    - initial_parameters: [0,0,0,0]
+      type: list
     - backend_specs:
         module_name: qeforest.simulator
         function_name: ForestSimulator
