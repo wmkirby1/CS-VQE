@@ -504,6 +504,25 @@ class cs_vqe_circuit():
         return qc
 
 
+    def init_params(self, anz_terms, num_sim_q):
+        """
+        """
+        qc = self.build_circuit(anz_terms, num_sim_q)
+
+        if anz_terms is not None:
+            anz_red, drop_pauli = self.project_anz_terms(anz_terms, num_sim_q)
+            if anz_red != {}:
+                init_anz_params = np.array([(anz_red[p]) for p in anz_red.keys() if set(p)!={'I'}])
+                if len(init_anz_params) != qc.num_parameters:
+                    init_anz_params = np.append(init_anz_params, 0)  
+            else:
+                init_anz_params = np.zeros(qc.num_parameters)
+        else:
+            drop_pauli = None
+
+        return init_anz_params
+
+
     def store_intermediate_result(self, eval_count, parameters, mean, std):
         """
         """

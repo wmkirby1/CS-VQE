@@ -95,6 +95,8 @@ steps:
     type: qubit-operator
   - name: ansatz_circuit
     type: circuit
+  - name: init_params
+    type: list
 
 - name: optimize-circuit
   passed: [ansatz-circuit]
@@ -114,7 +116,7 @@ steps:
       type: qubit-operator
     - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
       type: circuit
-    - initial_parameters: [0,0,0,0]
+    - initial_parameters: ((ansatz-circuit.init_params))
       type: list
     - backend_specs:
         module_name: qeforest.simulator
@@ -137,7 +139,7 @@ steps:
         function_name: perform_context_selection
       - module_name: zquantum.core.estimation 
         function_name: allocate_shots_uniformly
-        number_of_shots: 1000
+        number_of_shots: 10000
       type: specs  
   outputs:
     - name: optimization-results
