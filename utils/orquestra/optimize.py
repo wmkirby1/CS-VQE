@@ -66,16 +66,18 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
     if isinstance(target_operator, str):
         target_operator = load_qubit_operator(target_operator)
     
-    print('------------- checkpoint --------------')
+    print('------------- checkpoint 1 --------------')
     if isinstance(parametrized_circuit, str):
         with open(parametrized_circuit) as f:
             circ_json = json.load(f)
             parametrized_circuit = new_circuits.circuit_from_dict(circ_json)
-    print('------------- checkpoint --------------')
+    print('------------- checkpoint 2 --------------')
 
     if isinstance(backend_specs, str):
         backend_specs = json.loads(backend_specs)
     backend = create_object(backend_specs)
+
+    print('------------- checkpoint 3 --------------')
 
     if estimation_method_specs is not None:
         if isinstance(estimation_method_specs, str):
@@ -83,6 +85,8 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
         estimation_method = create_object(estimation_method_specs)
     else:
         estimation_method = estimate_expectation_values_by_averaging
+
+    print('------------- checkpoint 4 --------------')
 
     estimation_preprocessors = []
     if estimation_preprocessors_specs is not None:
@@ -95,6 +99,8 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
                 create_object(estimation_preprocessor_specs)
             )
 
+    print('------------- checkpoint 5 --------------')
+
     if initial_parameters is not None:
         if isinstance(initial_parameters, str):
             initial_parameters = load_array(initial_parameters)
@@ -102,6 +108,8 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
     if fixed_parameters is not None:
         if isinstance(fixed_parameters, str):
             fixed_parameters = load_array(fixed_parameters)
+
+    print('------------- checkpoint 6 --------------')
 
     cost_function = get_ground_state_cost_function(
         target_operator,
@@ -121,6 +129,7 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
     save_optimization_results(optimization_results, "optimization-results.json")
     save_array(optimization_results.opt_params, "optimized-parameters.json")
 
+    print('------------- done --------------')
 
 def optimize_ansatz_based_cost_function(
     optimizer_specs: Specs,
