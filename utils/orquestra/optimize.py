@@ -69,8 +69,8 @@ def optimize_parametrized_circuit_for_ground_state_of_operator(
     print('------------- checkpoint --------------')
     if isinstance(parametrized_circuit, str):
         with open(parametrized_circuit) as f:
-            print(json.load(f))
-            parametrized_circuit = new_circuits.circuit_from_dict(json.load(f))
+            circ_json = json.load(f)
+            parametrized_circuit = new_circuits.circuit_from_dict(circ_json)
     print('------------- checkpoint --------------')
 
     if isinstance(backend_specs, str):
