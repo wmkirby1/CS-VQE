@@ -126,7 +126,7 @@ steps:
     - optimizer_specs:
         module_name: zquantum.optimizers.scipy_optimizer
         function_name: ScipyOptimizer
-        method: L-BFGS-B
+        method: Powell
       type: specs
     #- estimation_method_specs:
     #    module_name: zquantum.core.estimation
