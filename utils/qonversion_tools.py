@@ -3,6 +3,9 @@ from qiskit.quantum_info.operators.symplectic.pauli import Pauli
 from qiskit.aqua.operators.legacy import WeightedPauliOperator
 from qiskit.opflow.primitive_ops import PauliOp
 
+PAULI_STRINGS_LOOKUP = {'I':0,'X':1,'Y':2,'Z':3}
+PAULI_STRINGS_LOOKUP_REVERSE = {0:'I', 1:'X', 2:'Y', 3:'Z'}
+
 # comment out due to incompatible versions of Cirq and OpenFermion in Orquestra
 def QubitOperator_to_dict(op, num_qubits):
     assert(type(op) == QubitOperator)
@@ -19,6 +22,7 @@ def QubitOperator_to_dict(op, num_qubits):
          
     return op_dict
 
+
 def dict_to_QubitOperator(op):
     assert(type(op) == dict)
     p_strings = list(op.keys())
@@ -33,12 +37,37 @@ def dict_to_QubitOperator(op):
     
     return out
 
+
 def WeightedPauliOperator_to_dict(op):
     assert(type(op) == WeightedPauliOperator)
     op_dict = {(p[1]).to_label():p[0] for p in op.paulis}
     
     return op_dict
 
+
 def dict_to_WeightedPauliOperator(op):
     assert(type(op) == dict)
     return sum([PauliOp(Pauli(p), op[p]) for p in op.keys()])
+
+
+def dict_to_list_index(ham_dict):
+    """ Convert Hamiltonian from Pauli string dictionary format to list indices
+    """
+    ham_list = []
+    for op in ham_dict.keys():
+        new_op=[]
+        for i in op:
+            new_op.append(PAULI_STRINGS_LOOKUP[i])
+        ham_list.append([ham_dict[op], new_op])
+    return ham_list
+
+def index_list_to_dict(ham_list):
+    """ Convert Hamiltonian from list indices to Pauli string dictionary
+    """
+    ham_dict = {}
+    for coeff, op in ham_list:
+        new_op = []
+        for i in op:
+            new_op.append(PAULI_STRINGS_LOOKUP_REVERSE[i])
+        ham_dict[''.join(new_op)] = coeff
+    return ham_dict

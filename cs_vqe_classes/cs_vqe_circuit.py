@@ -57,6 +57,7 @@ class cs_vqe_circuit():
     # class variables for storing VQE results
     cs_vqe_results = {}
     counts = []
+    prmset = []
     values = []
     errors = []
     # if True adds additional qubit to circuit
@@ -98,7 +99,9 @@ class cs_vqe_circuit():
             ham_noncon[t] = hamiltonian[t]
 
         if order is None:
-            order = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.true_gs)[3]
+            heuristic = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.true_gs)
+            #print(heuristic)
+            order = heuristic[3]
         self.order, self.ham_reduced = cs.reduced_hamiltonian(order)
 
         # +1-eigenstate parameters
@@ -114,6 +117,7 @@ class cs_vqe_circuit():
         """
         """
         q_pos_ord = [self.num_qubits-1-q for q in self.order]
+
         if complement:
             sim_indices = self.order[num_sim_q:]
             sim_qubits = q_pos_ord[num_sim_q:]
@@ -253,6 +257,7 @@ class cs_vqe_circuit():
         sim_indices = list(self.sim_qubits(num_sim_q)[1])
         sim_complement = list(set(range(self.num_qubits))-set(sim_indices))
         anz_rot = c_tools.rotate_operator(self.ham_rotations, anz_terms)
+        print(anz_rot)
         nc_state = self.reference_state()
         proj_anz = {}
         
@@ -527,14 +532,16 @@ class cs_vqe_circuit():
         """
         """
         self.counts.append(eval_count)
+        self.prmset.append(parameters)
         self.values.append(mean)
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), check_A=False, noise=False):
+    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, check_A=False, noise=False):
         """
         """
         self.counts.clear()
+        self.prmset.clear()
         self.values.clear()
         self.errors.clear()
 
@@ -553,7 +560,7 @@ class cs_vqe_circuit():
         else:
             drop_pauli = None
 
-        bounds = np.array([(p-np.pi/8, p+np.pi/8) for p in init_anz_params])
+        bounds = np.array([(p-param_bound, p+param_bound) for p in init_anz_params])
         qc.parameter_bounds = bounds
 
         seed = 42
@@ -620,8 +627,16 @@ class cs_vqe_circuit():
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)
 
         counts = deepcopy(self.counts)
+        prmset = deepcopy(self.prmset)
         values = deepcopy(self.values)
         errors = deepcopy(self.errors)
+
+        params={}
+        paramsymbols = list(qc.parameters)
+        paramsetting = list(zip(*[list(p) for p in prmset]))
+        
+        for index, p in enumerate(paramsymbols):
+            params[p.name] = paramsetting[index]
 
         # compute target energy for projected hamiltonian
         ham_mat = np.matrix(vqe_input_ham.to_matrix())
@@ -634,14 +649,17 @@ class cs_vqe_circuit():
                 'result':vqe_run.optimal_value,
                 'target':target_energy,
                 'projected_target':proj_energy,
+                'gs_noncon_energy':self.gs_noncon_energy, 
+                'true_gs':self.true_gs,
                 'A_expct':A_expct,
                 'drop_pauli':drop_pauli,
                 'counts':counts,
+                'params':params,
                 'values':values,
                 'errors':errors}
 
 
-    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), iters=1, check_A=False, noise=False):
+    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, iters=1, check_A=False, noise=False):
         """
         """
         if max_sim_q is None:
@@ -668,7 +686,7 @@ class cs_vqe_circuit():
             num_sim_q = index+1+min_sim_q
             vqe_iters=[]
             for i in range(iters):
-                vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer, check_A=check_A, noise=noise)
+                vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer,param_bound=param_bound, check_A=check_A, noise=noise)
                 vqe_iters.append(vqe_run)
                 print('**  Contextual target:', round(vqe_run['target'], 15), '| VQE result:', round(vqe_run['result'], 15))
                 error = vqe_run['result']-vqe_run['target']

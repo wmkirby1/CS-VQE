@@ -1,0 +1,903 @@
+{
+    "custom_gate_definitions": [
+        {
+            "gate_name": "Sdg",
+            "matrix": [
+                [
+                    "1.00000000000000",
+                    "0"
+                ],
+                [
+                    "0",
+                    "-1.0*I"
+                ]
+            ],
+            "params_ordering": []
+        }
+    ],
+    "n_qubits": 4,
+    "operations": [
+        {
+            "gate": {
+                "name": "X"
+            },
+            "qubit_indices": [
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβγ"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβγ"
+                ]
+            },
+            "qubit_indices": [
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβδ"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβδ"
+                ]
+            },
+            "qubit_indices": [
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβε"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβε"
+                ]
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβζ"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβζ"
+                ]
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβγ"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβγ"
+                ]
+            },
+            "qubit_indices": [
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβδ"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβδ"
+                ]
+            },
+            "qubit_indices": [
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                2,
+                3
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβε"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβε"
+                ]
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                1,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                1
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "Sdg"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "free_symbols": [
+                    "αβζ"
+                ],
+                "name": "RZ",
+                "params": [
+                    "-αβζ"
+                ]
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "CNOT"
+            },
+            "qubit_indices": [
+                0,
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                2
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "H"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        },
+        {
+            "gate": {
+                "name": "S"
+            },
+            "qubit_indices": [
+                0
+            ],
+            "type": "gate_operation"
+        }
+    ],
+    "schema": "zapata-v1-circuit-v2"
+}

@@ -93,6 +93,16 @@
     "charge":0,
     "basis":"sto-3g"
     },
+"H2O_STO-3G_SINGLET_alt":{
+    "atoms": ["O", "H", "H"],
+    "bond_len":1,
+    "coords":[  [0.0000000,	0.0000000,	0.00000000],
+                [0.0000000,	1.00000000, 0.0000000],
+                [0.984807753, -0.1736481777, 0.0000000]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"sto-3g"
+    },
 "BeH+_STO-3G_SINGLET":{
     "atoms": ["Be", "H"],
     "bond_len":1.342396,

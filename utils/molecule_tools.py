@@ -3,6 +3,7 @@ import json
 from collections import Counter
 import utils.qonversion_tools as qonvert
 from itertools import combinations
+from fermions.yaferp.misc import tapering
 import openfermion
 import openfermionpyscf
 from openfermion import MolecularData
@@ -37,7 +38,7 @@ def find_tapering(ham_q, num_qubits, taper_num):
     return best_taper[1]
 
 
-def construct_molecule(atoms, coords, multiplicity, charge, basis, taper_num=0):
+def construct_molecule(atoms, coords, multiplicity, charge, basis, taper=False):
     """
     """
     num_atoms = len(atoms)
@@ -70,14 +71,17 @@ def construct_molecule(atoms, coords, multiplicity, charge, basis, taper_num=0):
     ucc_op = uccsd_singlet_generator(packed_amps, num_qubits, num_electrons)
     ucc_q = jordan_wigner(ucc_op)
     
-    if taper_num:
-        optimal_tapering = find_tapering(ham_q, num_qubits, taper_num)
-        ham_q = taper_off_qubits(ham_q, optimal_tapering) 
-        ucc_q = taper_off_qubits(ucc_q, optimal_tapering)
-        num_qubits = num_qubits-taper_num
+    #if taper_num:
+    #    optimal_tapering = find_tapering(ham_q, num_qubits, taper_num)
+    #    ham_q = taper_off_qubits(ham_q, optimal_tapering) 
+    #    ucc_q = taper_off_qubits(ucc_q, optimal_tapering)
+    #    num_qubits = num_qubits-taper_num
 
     ham = qonvert.QubitOperator_to_dict(ham_q, num_qubits)
     ucc = qonvert.QubitOperator_to_dict(ucc_q, num_qubits)
+
+    if taper:
+        ham, ucc, num_qubits = tapering.taper_dict(ham, ucc)
 
     return {'speciesname':speciesname,
             'num_qubits': num_qubits,
@@ -85,7 +89,7 @@ def construct_molecule(atoms, coords, multiplicity, charge, basis, taper_num=0):
             'uccsdansatz':ucc}
 
 
-def get_molecule(speciesname, taper_num=0):
+def get_molecule(speciesname, taper=False):
     """
     """
     file = 'molecule_data'
@@ -93,6 +97,6 @@ def get_molecule(speciesname, taper_num=0):
         molecule_data = json.load(json_file)
 
     atoms, bond_len, coords, multiplicity, charge, basis = molecule_data[speciesname].values()
-    mol_out = construct_molecule(atoms, coords, multiplicity, charge, basis, taper_num)
+    mol_out = construct_molecule(atoms, coords, multiplicity, charge, basis, taper)
     
     return mol_out
