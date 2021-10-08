@@ -4,6 +4,8 @@ import sympy
 import scipy.linalg
 import copy
 import utils.qonversion_tools as qonvert
+import utils.linalg_tools as la
+import utils.bit_tools as bit
 import fermions.yaferp.general.fermions as fermions
 import fermions.yaferp.general.sparseFermions as sparseFermions
 
@@ -345,9 +347,10 @@ def reducedToTaperedOplist(reducedOplist, taper_oplist):
 
 def taperOplist(oplist,anzlist,hfStateIndex,kernel=None,explicitEigvals=False):
     reduced_ham, reduced_anz = reducedHamiltonian(oplist,anzlist,hfStateIndex,kernel,explicitEigvals)
+    qubits_tapered = taperableQubits(reduced_ham)
     tapered_ham = reducedToTaperedOplist(reduced_ham, reduced_ham)
     tapered_anz = reducedToTaperedOplist(reduced_anz, reduced_ham)
-    return tapered_ham, tapered_anz
+    return tapered_ham, tapered_anz, qubits_tapered
 
 
 '''
@@ -394,16 +397,18 @@ def readTaperingHamiltonian(filepath):
 def taper_dict(ham, anz):
     ham_list = qonvert.dict_to_list_index(ham)
     anz_list = qonvert.dict_to_list_index(anz)
-
+    num_qubits = len(ham_list[0][1])
+    hf_config = bit.int_to_bin(list(la.hf_state(range(int(num_qubits/2)), num_qubits).data).index(1), num_qubits)
+    
     hf_index = hfDegenerateGroundState(ham_list)[1][-1]
-    tap_ham, tap_anz = taperOplist(ham_list, anz_list, hf_index)
+    tap_ham, tap_anz, qubits_tapered = taperOplist(ham_list, anz_list, hf_index)
 
     new_ham = qonvert.index_list_to_dict(tap_ham)
     new_anz = qonvert.index_list_to_dict(tap_anz)
+    new_num_qubits = len(list(new_ham.keys())[0])
+    new_hf_config = ''.join([hf_config[i] for i in range(num_qubits) if i not in qubits_tapered])
 
-    num_qubits = len(list(new_ham.keys())[0])
-
-    return new_ham, new_anz, num_qubits
+    return new_ham, new_anz, new_num_qubits, new_hf_config
 
 
 TEST_OPLIST = [[(-0.8026507290573593+0j), (0, 0, 0, 0)],

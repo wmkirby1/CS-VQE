@@ -2,6 +2,8 @@ import numpy as np
 import json
 from collections import Counter
 import utils.qonversion_tools as qonvert
+import utils.bit_tools as bit
+import utils.linalg_tools as la
 from itertools import combinations
 from fermions.yaferp.misc import tapering
 import openfermion
@@ -79,14 +81,16 @@ def construct_molecule(atoms, coords, multiplicity, charge, basis, taper=False):
 
     ham = qonvert.QubitOperator_to_dict(ham_q, num_qubits)
     ucc = qonvert.QubitOperator_to_dict(ucc_q, num_qubits)
+    hf_config = bit.int_to_bin(list(la.hf_state(range(int(num_qubits/2)), num_qubits).data).index(1), num_qubits)
 
     if taper:
-        ham, ucc, num_qubits = tapering.taper_dict(ham, ucc)
+        ham, ucc, num_qubits, hf_config = tapering.taper_dict(ham, ucc)
 
     return {'speciesname':speciesname,
             'num_qubits': num_qubits,
             'hamiltonian':ham,
-            'uccsdansatz':ucc}
+            'uccsdansatz':ucc,
+            'hf_config':  hf_config}
 
 
 def get_molecule(speciesname, taper=False):
