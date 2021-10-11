@@ -37,7 +37,87 @@ from qiskit.test.mock import FakeVigo
 
 
 class cs_vqe_circuit():
-    """
+    """ Class for constructing and executing CS-VQE Ansatz circuits
+    
+    Attributes
+    ----------
+    cs_vqe_results : dict
+        Stores CS-VQE output data
+    counts : list
+        List of optimiser counts
+    prmset : list
+        List of optimiser parameter settings for each iterate
+    values : list
+        List of optimiser outputs for each iterate 
+    errors : list
+        List of VQE errors for each iterate
+    ancilla : bool
+        Flag indicating whether the circuit requires an ancilla qubit
+    red_anz_drop : bool
+        Flag indicating whether there is a non-identity operator under projection
+    hamiltonian : dict
+        Dictionary of Hamiltnonian terms (Pauli strings) and corresponding coefficients
+    HF_config: str
+        Binary string representing the Hartree-Fock state
+    num_qubits : int
+        The number of qubits in the Hamiltonian
+    G : dict
+        Dictionary of commuting noncontextual generators
+    A : dict
+        Dictionary representing the observable A
+    rot_G : bool
+        Flag specifying whether to apply G rotations
+    rot_A : bool
+        Flag specifying whether to apply A rotations
+    ham_rotations : list
+        List of rotations in form [[angle, operator], ...]
+    X_index : int
+        Index of the X qubit in A2
+    X_qubit : int
+        Qubit position of the X qubit in A2
+    gs_noncon_energy : float
+        The noncontextual ground state energy
+    true_gs : float
+        The true ground state energy of the full Hamiltonian
+    order : list
+        Qubit inclusion ordering - should be optimal from cs_tools
+    ham_reduced : list
+        List of dictionaries, each representing a reduced CS-VQE hamiltonian
+    init_state : str
+        Binary string representing the noncontextual ground state
+    index_paulis : dict
+        Dictionary of single-qubit Pauli operators and their positions in each term of the observable A
+    r1, r2 : int
+        Coefficients of the terms in the observable A
+    A1, A2 :
+        Pauli operators comprising the terms in the observable A
+
+    Methods
+    -------
+    sim_qubits
+    reduced_parity_bits
+    lost_parity
+    reference_state
+    plot_gs_amps
+    qubit_map 
+    reduce_anz_terms
+    reduce_rotations 
+    project_anz_term
+    gs_check_block
+    ref_state_block
+    anz_block
+    swap_entgl_block
+    rot_ham_block
+    rot_A_block
+    A_eig_block
+    parity_cascade_block
+    full_uccsd
+    build_circuit
+    init_params
+    store_intermediate_result
+    CS_VQE
+    run_cs_vqe
+
     """
     # class variables for storing VQE results
     cs_vqe_results = {}
@@ -99,7 +179,7 @@ class cs_vqe_circuit():
             self.A1, self.A2 = self.A.keys()
 
     def sim_qubits(self, num_sim_q, complement=False):
-        """
+        """ Specifies which qubits of the full electronic structure problem are to be simulated
         """
         q_pos_ord = [self.num_qubits-1-q for q in self.order]
 
@@ -117,7 +197,8 @@ class cs_vqe_circuit():
 
 
     def reduced_parity_bits(self, num_sim_q):
-        """
+        """ For +1-eigenspace of A restriction, stores the qubit 
+            positions of Z operators in each term for parity calculation
         """
         IZ1_red = [q for q in self.index_paulis['Z1'] if q in self.sim_qubits(num_sim_q)[0]]
         IZ2_red = [q for q in self.index_paulis['Z2'] if q in self.sim_qubits(num_sim_q)[0]]
@@ -125,7 +206,8 @@ class cs_vqe_circuit():
 
 
     def lost_parity(self, Z_qubits, num_sim_q):
-        """
+        """ Compensates for the 'lost' Z operators under contextual 
+            subspace restriction for parity calculation
         """
         lost_parity = 0
 
@@ -137,7 +219,7 @@ class cs_vqe_circuit():
     
 
     def reference_state(self, input_ham=None):
-        """
+        """ Generates a reference state for the Ansatz operator
         """
         reference_bits={}
 
@@ -171,9 +253,24 @@ class cs_vqe_circuit():
 
         return ref_string
 
-    
-    def qubit_map(self, num_sim_q):
+
+    def plot_gs_amps(self, num_sim_q):
+        """ Plots a histogram of basis state amplitudes in order of weight
         """
+        ham_red = self.ham_reduced[num_sim_q]
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
+        gs_vector = get_ground_state(ham_mat)[1]
+        amp_list = [abs(a)**2 for a in list(gs_vector)]
+        sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
+        sig_amp_list.reverse()
+        X, Y = zip(*sig_amp_list)
+        fig, ax = plt.subplots()
+        ax.bar(X, Y)
+        print(plt.show())
+
+
+    def qubit_map(self, num_sim_q):
+        """ Maps the simulated qubits onto those available
         """
         q_map={}
         sim_qubits = self.sim_qubits(num_sim_q)[0]
@@ -185,9 +282,10 @@ class cs_vqe_circuit():
 
         return q_map
 
-   
+
     def reduce_anz_terms(self, anz_terms, num_sim_q, fix_X_qubit=False):
-        """
+        """ Very rudimentary restriction - simply deletes qubit 
+            positions fixed by noncontextual ground state
         """
         if type(anz_terms)!=dict:
             anz_terms = {t:0 for t in anz_terms}
@@ -217,6 +315,9 @@ class cs_vqe_circuit():
 
     
     def reduce_rotations(self, rotations, num_sim_q):
+        """ Same method as reduce_anz_terms but for the rotations 
+            diagonalising the noncontextual Hamiltonian
+        """
         rot = [tuple(r) for r in deepcopy(rotations)]
         rot_red = []
         for r, p in rot:
@@ -235,9 +336,9 @@ class cs_vqe_circuit():
 
         return rot_red
 
-    
+
     def project_anz_terms(self, anz_terms, num_sim_q):
-        """
+        """ Determines which Ansatz terms to keep from the full operator for the reduced form
         """
         sim_indices = list(self.sim_qubits(num_sim_q)[1])
         sim_complement = list(set(range(self.num_qubits))-set(sim_indices))
@@ -317,7 +418,7 @@ class cs_vqe_circuit():
     ###################################################################################
 
     def gs_check_block(self, qc, num_sim_q):
-        """
+        """ Insert as reference the true ground state for development purposes (not to be used in practice)
         """
         ham_red = self.ham_reduced[num_sim_q]
         ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
@@ -326,7 +427,8 @@ class cs_vqe_circuit():
 
 
     def ref_state_block(self, qc, num_sim_q, ref_type='nc_gs'):
-        """
+        """ Inserts a reference state for the Ansatz operator, such as 
+            Hartree-Fock or the noncontextual ground state configuration
         """
         q_map = self.qubit_map(num_sim_q)
         sim_qubits = self.sim_qubits(num_sim_q)[0]
@@ -347,7 +449,7 @@ class cs_vqe_circuit():
 
 
     def anz_block(self, anz_terms, qc, num_sim_q):
-        """
+        """ Inserts gates effecting the reduced Ansatz operator
         """
         q_map = self.qubit_map(num_sim_q)
 
@@ -363,7 +465,8 @@ class cs_vqe_circuit():
 
 
     def swap_entgl_block(self, qc, num_sim_q):
-        """requires ancilla
+        """ For restricting to +1-eigenspace of A, fixes the X-qubit 
+            to 0 by swapping its entanglement with an ancilla bit
         """
         assert(self.ancilla == True)
 
@@ -373,7 +476,8 @@ class cs_vqe_circuit():
 
 
     def rot_ham_block(self, qc, num_sim_q, inverse=False):
-        """
+        """ Performs the rotations diagonalising the commuting noncontextual 
+            generators (i.e. excluding unitary partitioning rotations)
         """
         ham_rot = self.reduce_rotations(self.ham_rotations, num_sim_q)
         if inverse:
@@ -386,7 +490,7 @@ class cs_vqe_circuit():
 
 
     def rot_A_block(self, qc, num_sim_q, inverse=False):
-        """
+        """ Determines and subsequently performs the unitary partitioning rotations
         """
         diag_A = []
         rot = c_tools.pauli_mult(self.A1, self.A2)
@@ -422,7 +526,7 @@ class cs_vqe_circuit():
 
 
     def A_eig_block(self, qc, num_sim_q):
-        """
+        """ Explicitly restrict to the +1-eigenspace of A - requires ancilla
         """
         assert(self.ancilla == True)
 
@@ -436,7 +540,8 @@ class cs_vqe_circuit():
 
 
     def parity_cascade_block(self, qc, Z_qubits, num_sim_q, inner_circ=None):
-        """
+        """ Cascade of CNOT gates to compute parity of some subset of qubits and store the result in ancilla 
+            qubit. Allows the user to insert a circuit block before uncomputing the parity calculation.
         """
         assert(self.ancilla == True)
 
@@ -464,11 +569,15 @@ class cs_vqe_circuit():
         if lost_parity:
             qc.x(num_sim_q)
 
-    
-    ####################### circuit builder and VQE functionality #####################
+
+    ###################################################################################
+    ####################### Circuit builder and VQE functionality #####################
     ###################################################################################
 
+
     def full_uccsd(self, anz_terms):
+        """ Full UCCSD operator for benchmarking
+        """
         q_map = self.qubit_map(self.num_qubits)
         qc = QuantumCircuit(self.num_qubits)
         for q in self.HF_config:
@@ -477,19 +586,8 @@ class cs_vqe_circuit():
         return qc
     
     def build_circuit(self, anz_terms, num_sim_q):
+        """ This is where the circuit blocks are selected and the quantum circuit object is built
         """
-        """
-        #ham_red = self.ham_reduced[num_sim_q]
-        #ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
-        #gs_vector = get_ground_state(ham_mat)[1]
-        #amp_list = [abs(a)**2 for a in list(gs_vector)]
-        #sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
-        #sig_amp_list.reverse()
-        #X, Y = zip(*sig_amp_list)
-        #fig, ax = plt.subplots()
-        #ax.bar(X, Y)
-        #print(plt.show())
-
         self.ancilla = False
 
         q_map = self.qubit_map(num_sim_q)
@@ -513,7 +611,7 @@ class cs_vqe_circuit():
 
 
     def init_params(self, anz_terms, num_sim_q):
-        """
+        """ Returns the initial parameters for input into classical optimiser
         """
         qc = self.build_circuit(anz_terms, num_sim_q)
 
@@ -530,7 +628,7 @@ class cs_vqe_circuit():
 
 
     def store_intermediate_result(self, eval_count, parameters, mean, std):
-        """
+        """ Outputs intermediate data during VQE routine
         """
         self.counts.append(eval_count)
         self.prmset.append(parameters)
@@ -539,7 +637,7 @@ class cs_vqe_circuit():
 
 
     def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, check_A=False, noise=False):
-        """
+        """ Runs CS-VQE for a given Ansatz operator and number of qubits to simulate
         """
         self.counts.clear()
         self.prmset.clear()
@@ -658,7 +756,7 @@ class cs_vqe_circuit():
 
 
     def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, iters=1, check_A=False, noise=False):
-        """
+        """ Runs multiple CS-VQE routine up to and including the maximum specified number of qubits
         """
         if max_sim_q is None:
             max_sim_q = self.num_qubits
