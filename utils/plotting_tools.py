@@ -234,7 +234,7 @@ def plot_cs_vqe_convergence_alt(data, title=None, max_num_plots=None,x=None,y=No
     return fig
 
 
-def plot_parameter_settings(data):
+def plot_parameter_settings(data, title=None):
     """
     """
     params = list(data['params'].keys())
@@ -314,5 +314,8 @@ def plot_parameter_settings(data):
             bbox_to_anchor=(1.5, 0.5),
             fancybox=True, 
             shadow=True)
+
+    if title is not None:
+        fig.suptitle(title, fontsize=15, y=0.98)
 
     return fig

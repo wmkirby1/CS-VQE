@@ -112,6 +112,7 @@ class cs_vqe_circuit():
     A_eig_block
     parity_cascade_block
     full_uccsd
+    cancel_pairs
     build_circuit
     init_params
     store_intermediate_result
@@ -166,8 +167,15 @@ class cs_vqe_circuit():
 
         if order is None:
             heuristic = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.true_gs)
+            self.cs_vqe_energy = heuristic[1]
+            self.cs_vqe_errors = heuristic[2]
+            for num_q, e in enumerate(heuristic[2]):
+                if e <= 0.0016:
+                    self.chem_acc_num_q = num_q
+                    break
             order = heuristic[3]
         self.order, self.ham_reduced = cs.reduced_hamiltonian(order)
+        
 
         # +1-eigenstate parameters
         self.init_state = cs.init_state()
@@ -254,6 +262,17 @@ class cs_vqe_circuit():
         return ref_string
 
 
+    def plot_cs_vqe_errors(self):
+        X = range(0, self.num_qubits+1)
+        Y = self.cs_vqe_errors
+        fig, ax = plt.subplots()
+        ax.plot(X, Y)
+        ax.hlines(0.0016, 0, self.num_qubits, color='pink')
+        ax.set_xlabel('Number of qubits simulated')
+        ax.set_ylabel('Error (Ha)')
+        plt.show()
+
+
     def plot_gs_amps(self, num_sim_q):
         """ Plots a histogram of basis state amplitudes in order of weight
         """
@@ -261,12 +280,16 @@ class cs_vqe_circuit():
         ham_mat = qonvert.dict_to_WeightedPauliOperator(ham_red).to_matrix()
         gs_vector = get_ground_state(ham_mat)[1]
         amp_list = [abs(a)**2 for a in list(gs_vector)]
-        sig_amp_list = sorted([(str(index), a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
+        sig_amp_list = sorted([(index, a) for index, a in enumerate(amp_list) if a > 0.001], key=lambda x:x[1])
         sig_amp_list.reverse()
         X, Y = zip(*sig_amp_list)
+        X = [bit.int_to_bin(x, num_sim_q)+' ('+str(x)+')' for x in X]
         fig, ax = plt.subplots()
         ax.bar(X, Y)
-        print(plt.show())
+        plt.xticks(rotation=45)
+        ax.set_xlabel('Basis state')
+        ax.set_ylabel('Probability of measurement')
+        plt.show()
 
 
     def qubit_map(self, num_sim_q):
@@ -356,9 +379,9 @@ class cs_vqe_circuit():
                 sim_pauli_list = [p[i] for i in sim_indices]
                 sim_pauli = ''.join(sim_pauli_list)
                 
-                #flp_pauli_list = deepcopy(sim_pauli_list)
-                #flp_pauli_list.reverse()
-                #flp_pauli = ''.join(flp_pauli_list)
+                flp_pauli_list = deepcopy(sim_pauli_list)
+                flp_pauli_list.reverse()
+                flp_pauli = ''.join(flp_pauli_list)
                 
                 coeff = anz_rot[p]
                 if set(sim_pauli) != {'I'}:
@@ -366,10 +389,10 @@ class cs_vqe_circuit():
                         proj_anz[sim_pauli] += sgn*coeff
                     else:
                         proj_anz[sim_pauli] = sgn*coeff
-                    #if flp_pauli in proj_anz.keys():
-                    #    proj_anz[flp_pauli] += -sgn*coeff
-                    #else:
-                    #    proj_anz[flp_pauli] = -sgn*coeff
+                    if flp_pauli in proj_anz.keys():
+                        proj_anz[flp_pauli] += -sgn*coeff
+                    else:
+                        proj_anz[flp_pauli] = -sgn*coeff
             else:
                 t = np.tan(anz_rot[p])
                 #sim_pauli_list = [p[i] for i in sim_indices]
@@ -404,11 +427,11 @@ class cs_vqe_circuit():
             sgn *= new_sgn
 
         drop_pauli = ''.join([prod[i] for i in sim_indices])
-        if set(drop_pauli) != {'I'}:
-            self.red_anz_drop = True
-            proj_anz[drop_pauli] = 0
-        else:
-            self.red_anz_drop = False
+        #if set(drop_pauli) != {'I'}:
+        #    self.red_anz_drop = True
+        #    proj_anz[drop_pauli] = 0
+        #else:
+        #    self.red_anz_drop = False
         return proj_anz#, drop_pauli
 
     
@@ -584,29 +607,55 @@ class cs_vqe_circuit():
             qc.x(q_map[int(q)])
         qc = circ.circ_from_paulis(paulis=list(anz_terms.keys()), circ=qc, trot_order=2, dup_param=False)
         return qc
+
+
+    def cancel_pairs(self, circ, hit_set):
+        """ Cancel neighbouring inverse gates, eg. S and Sdg, or H^2
+        """
+        gate_dict={}
+        for i in range(circ.num_qubits):
+            gate_dict[i] = []
+        for index, gate in enumerate(circ.data):
+            gate_dict[gate[1][0].index].append((index, gate[0].name))
+        delete_index = []
+        for i in gate_dict.keys():
+            gates = gate_dict[i]
+            for j in range(len(gates)-1):
+                pair = list(zip(*(gates[j], gates[j+1])))
+                if set(pair[1]) == hit_set:
+                    for k in pair[0]:
+                        delete_index.append(k)
+        delete_index = sorted(delete_index)
+
+        shift=0
+        for i in delete_index:
+            circ.data.pop(i-shift)
+            shift+=1
     
+
     def build_circuit(self, anz_terms, num_sim_q):
         """ This is where the circuit blocks are selected and the quantum circuit object is built
         """
         self.ancilla = False
-
-        q_map = self.qubit_map(num_sim_q)
-        sim_qubits = self.sim_qubits(num_sim_q)[0]
 
         if self.ancilla:
             dim = num_sim_q + 1
         else:
             dim = num_sim_q
 
+        # Initialise the Ansatz
         qc = QuantumCircuit(dim)
-        #self.gs_check_block(qc, num_sim_q)
         self.ref_state_block(qc, num_sim_q)#, ref_type='HF')
         self.anz_block(anz_terms, qc, num_sim_q)
 
-        # qiskit variational_algorithm struggling with only one parameter
+        # Qiskit variational_algorithm struggling with only one parameter
         if qc.num_parameters == 1:
             qc.rz(Parameter('b'), 0)
-        #print(qc.draw())
+
+        # Cancellation of neighbouring S, Sdg and H gates arising from exponentiation
+        self.cancel_pairs(circ=qc, hit_set={'s', 'sdg'})
+        self.cancel_pairs(circ=qc, hit_set={'h', 'h'})
+
         return qc
 
 
@@ -643,6 +692,8 @@ class cs_vqe_circuit():
         self.prmset.clear()
         self.values.clear()
         self.errors.clear()
+
+        self.plot_gs_amps(num_sim_q)
 
         qc = self.build_circuit(anz_terms, num_sim_q)
 
@@ -719,7 +770,8 @@ class cs_vqe_circuit():
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(input_ham)
         gs_red = la.get_ground_state(vqe_input_ham.to_matrix())
-        target_energy = gs_red[0]
+        #target_energy = gs_red[0]
+        target_energy = self.cs_vqe_energy[num_sim_q]
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)
 
         counts = deepcopy(self.counts)
