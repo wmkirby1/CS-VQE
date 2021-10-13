@@ -319,3 +319,55 @@ def plot_parameter_settings(data, title=None):
         fig.suptitle(title, fontsize=15, y=0.98)
 
     return fig
+
+
+def plot_parameter_settings_alt(data, title=None):
+    """
+    """
+    params = list(data['params'].keys())
+    num_params = len(params)
+
+    fig, axs = plt.subplots(nrows = 2, ncols = 1,
+                            sharex=True,
+                            figsize=(8, 8))
+
+    axs[0].set_title('Parameter settings')
+    for index, p in enumerate(params):
+        c = plt.cm.jet(index/(num_params))
+        axs[0].plot(data['counts'], data['params'][p], label=p, color=c)
+    axs[0].set_ylabel('Parameter value')
+
+    X, Y = data['counts'], data['values']
+
+    axs[1].set_title('Optimiser output')
+    axs[1].plot(X, Y, color='black')
+    axs[1].set_xlabel('Optimisation count')
+    axs[1].set_ylabel('Energy (Ha)')
+
+    # plot results in corresponding subfigure
+    l1 = axs[1].plot(X, Y, color='black', zorder=2, label='CS-VQE optimisation')
+    # creating legend labels for target and convergence value
+    #l2 = axs[1].plot([1], [data['gs_noncon_energy']], color='r', zorder=0, label='Noncontextual ground state energy')
+    l3 = axs[1].hlines(data['true_gs'], 0, X[-1], color='g', zorder=1, label='True ground state energy')
+    #l4 = axs[1].plot([1], [data['target']], color='purple', ls='--', zorder=3, label='Target Value')
+    l5 = axs[1].hlines(data['result'],0,X[-1], color='b', ls=':', zorder=4, label='Convergence Value')
+    #l6 = axs[1].hlines(data['true_gs']+0.0016,0,X[-1], color='pink', zorder=5, label='Chemical accuracy')
+    
+    axs[0].legend(loc="right",   # Position of legend
+            borderaxespad=0.1,    # Small spacing around legend box
+            ncol=3,
+            bbox_to_anchor=(1.5, 0.5),
+            fancybox=True, 
+            shadow=True)
+
+    axs[1].legend(loc="right",   # Position of legend
+            borderaxespad=0.1,    # Small spacing around legend box
+            ncol=1,
+            bbox_to_anchor=(1.5, 0.5),
+            fancybox=True, 
+            shadow=True)
+
+    if title is not None:
+        fig.suptitle(title, fontsize=15, y=0.98)
+
+    return fig

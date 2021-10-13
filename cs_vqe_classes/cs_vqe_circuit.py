@@ -17,8 +17,6 @@ from qiskit.utils import QuantumInstance
 from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS_B, P_BFGS,
                                                 NELDER_MEAD, CG, ADAM, POWELL, TNC, GSLS,
                                                 NFT, IMFIL, BOBYQA, SNOBFIT)
-from qiskit.algorithms import VQE
-from qiskit import Aer
 from openfermion.linalg import get_ground_state, jw_configuration_state
 
 import numpy as np
@@ -135,6 +133,9 @@ class cs_vqe_circuit():
         #for index, i in enumerate(la.hf_state(range(int(num_qubits/2)), num_qubits)):
         #    if i == 1:
         #        self.HF_config = bit.int_to_bin(index, num_qubits)
+        if not c_tools.contextualQ_ham(deepcopy(hamiltonian)):
+            raise Exception('Hamiltonian is not contextual')
+        
         self.HF_config = hf_config
         
         self.hamiltonian = hamiltonian
@@ -667,7 +668,7 @@ class cs_vqe_circuit():
         if anz_terms is not None:
             anz_red = self.project_anz_terms(anz_terms, num_sim_q)
             if anz_red != {}:
-                init_anz_params = np.array([(anz_red[p]) for p in anz_red.keys() if set(p)!={'I'}])
+                init_anz_params = np.array([(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
                 if len(init_anz_params) != qc.num_parameters:
                     init_anz_params = np.append(init_anz_params, 0)  
             else:
