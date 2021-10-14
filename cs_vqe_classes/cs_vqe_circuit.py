@@ -380,9 +380,9 @@ class cs_vqe_circuit():
                 sim_pauli_list = [p[i] for i in sim_indices]
                 sim_pauli = ''.join(sim_pauli_list)
                 
-                flp_pauli_list = deepcopy(sim_pauli_list)
-                flp_pauli_list.reverse()
-                flp_pauli = ''.join(flp_pauli_list)
+                #flp_pauli_list = deepcopy(sim_pauli_list)
+                #flp_pauli_list.reverse()
+                #flp_pauli = ''.join(flp_pauli_list)
                 
                 coeff = anz_rot[p]
                 if set(sim_pauli) != {'I'}:
@@ -390,10 +390,10 @@ class cs_vqe_circuit():
                         proj_anz[sim_pauli] += sgn*coeff
                     else:
                         proj_anz[sim_pauli] = sgn*coeff
-                    if flp_pauli in proj_anz.keys():
-                        proj_anz[flp_pauli] += -sgn*coeff
-                    else:
-                        proj_anz[flp_pauli] = -sgn*coeff
+                    #if flp_pauli in proj_anz.keys():
+                    #    proj_anz[flp_pauli] += -sgn*coeff
+                    #else:
+                    #    proj_anz[flp_pauli] = -sgn*coeff
             else:
                 t = np.tan(anz_rot[p])
                 #sim_pauli_list = [p[i] for i in sim_indices]
