@@ -2,6 +2,8 @@ from openfermion.ops import QubitOperator
 from qiskit.quantum_info.operators.symplectic.pauli import Pauli
 from qiskit.aqua.operators.legacy import WeightedPauliOperator
 from qiskit.opflow.primitive_ops import PauliOp
+from openfermion.ops import FermionOperator
+from qiskit_nature.operators.second_quantization.fermionic_op import FermionicOp
 
 PAULI_STRINGS_LOOKUP = {'I':0,'X':1,'Y':2,'Z':3}
 PAULI_STRINGS_LOOKUP_REVERSE = {0:'I', 1:'X', 2:'Y', 3:'Z'}
@@ -71,3 +73,20 @@ def index_list_to_dict(ham_list):
             new_op.append(PAULI_STRINGS_LOOKUP_REVERSE[i])
         ham_dict[''.join(new_op)] = coeff
     return ham_dict
+
+
+def fermionic_openfermion_to_qiskit(f_operator, num_qubits):
+    assert(type(f_operator)==FermionOperator)
+    f_map = {1:'+', 0:'-'}
+    f_ops = list(f_operator.terms.keys())
+    mapped_f_ops=[]
+
+    for op in f_ops:
+        f_string=''
+        for t in op:
+            q_pos = t[0]
+            dag = t[1]
+            f_string += f_map[dag]+'_'+str(q_pos)+' '
+        mapped_f_ops.append(f_operator.terms[op]*FermionicOp(f_string, display_format="sparse", register_length=num_qubits))
+
+    return sum(mapped_f_ops)

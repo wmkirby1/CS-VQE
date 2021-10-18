@@ -6,6 +6,7 @@ import cs_vqe_classes.cs_vqe_circuit as cs_circ
 from statistics import median
 from copy import deepcopy
 
+plt.style.use('ggplot')
 
 def factor_int(n):
     val = math.ceil(math.sqrt(n))
@@ -327,8 +328,7 @@ def plot_parameter_settings_alt(data, title=None):
     """
     params = list(data['params'].keys())
     num_params = len(params)
-    
-    plt.style.use('ggplot')
+
     fig, axs = plt.subplots(nrows = 2, ncols = 1,
                             sharex=True,
                             figsize=(8, 8))
@@ -344,19 +344,19 @@ def plot_parameter_settings_alt(data, title=None):
     Y = [v-data['true_gs'] for v in data['values']]
     
     axs[0].set_title('%s %s optimiser output'%(data['backend'],data['optimiser']))
-    axs[0].set_ylabel('Logarithmic error (log10(Ha))')#'Energy (Ha)')
+    axs[0].set_ylabel('Error (Ha)')#'Energy (Ha)')
 
     # plot results in corresponding subfigure
-    l1 = axs[0].plot(X, [np.log10(y) for y in Y], color='black', label='CS-VQE optimisation', linewidth=1)
+    l1 = axs[0].plot(X, Y, color='black', label='CS-VQE optimisation', linewidth=1)
     
     if data['errors']:
-        stddev_upper = [np.log10(a+b) for a,b in list(zip(Y, data['errors']))]
-        stddev_lower = [np.log10(a-b) for a,b in list(zip(Y, data['errors']))]
+        stddev_upper = [a+b for a,b in list(zip(Y, data['errors']))]
+        stddev_lower = [a-b for a,b in list(zip(Y, data['errors']))]
         axs[0].fill_between(X, stddev_lower, stddev_upper,alpha=0.8, label='Standard deviation')
     # creating legend labels for target and convergence value
     #l2 = axs[1].plot([1], [data['gs_noncon_energy']], color='r', zorder=0, label='Noncontextual ground state energy')
-    l2 = axs[0].hlines(np.log10(data['result']-data['true_gs']),0,X[-1], color='b', ls=':', label='Convergence Value')
-    l3 = axs[0].hlines(np.log10(0.0016),0,X[-1], color='green',label='Chemical accuracy')
+    l2 = axs[0].hlines(data['result']-data['true_gs'],0,X[-1], color='b', ls=':', label='Convergence Value')
+    l3 = axs[0].hlines(0.0016,0,X[-1], color='green',label='Chemical accuracy')
     #l4 = axs[0].hlines(data['true_gs'], 0, X[-1], color='g', label='True ground state energy')
     #l4 = axs[1].plot([1], [data['target']], color='purple', ls='--', zorder=3, label='Target Value')
     
@@ -371,7 +371,7 @@ def plot_parameter_settings_alt(data, title=None):
     axs[0].legend(loc="right",   # Position of legend
             borderaxespad=0.1,    # Small spacing around legend box
             ncol=1,
-            bbox_to_anchor=(1.5, 0.5),
+            bbox_to_anchor=(1.38, 0.5),
             fancybox=True, 
             shadow=True)
 
