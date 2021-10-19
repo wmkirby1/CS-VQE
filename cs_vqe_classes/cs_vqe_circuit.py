@@ -2,7 +2,7 @@ from numpy.lib.npyio import _save_dispatcher
 from cs_vqe_classes.cs_vqe import cs_vqe
 from cs_vqe_classes.eigenstate import eigenstate
 import utils.bit_tools as bit
-import utils.cs_vqe_tools as c_tools
+import utils.cs_vqe_tools_original as c_tools
 import utils.circuit_tools as circ
 import utils.qonversion_tools as qonvert
 import utils.linalg_tools as la
@@ -128,7 +128,7 @@ class cs_vqe_circuit():
     ancilla = False
     red_anz_drop = False
     
-    def __init__(self, hamiltonian, terms_noncon, num_qubits, hf_config, order=None, rot_G=True, rot_A=True):
+    def __init__(self, hamiltonian, terms_noncon, num_qubits, hf_config, order=None):#, rot_G=True, rot_A=True):
         #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
         #for index, i in enumerate(la.hf_state(range(int(num_qubits/2)), num_qubits)):
         #    if i == 1:
@@ -140,11 +140,11 @@ class cs_vqe_circuit():
         
         self.hamiltonian = hamiltonian
         self.num_qubits = num_qubits
-        self.rot_G = rot_G
-        self.rot_A = rot_A
+        #self.rot_G = rot_G
+        #self.rot_A = rot_A
 
         # epistricted model and reduced Hamiltonian
-        cs = cs_vqe(hamiltonian, terms_noncon, num_qubits, rot_G, rot_A)
+        cs = cs_vqe(hamiltonian, terms_noncon, num_qubits)#, rot_G, rot_A)
         self.ham_rotations = cs.rotations()
         generators = cs.generators()
 
@@ -154,12 +154,12 @@ class cs_vqe_circuit():
         self.G = generators[0]
         self.A = generators[1] 
 
-        if rot_A:
-            self.X_index = list(self.A.keys())[0].find('Z')
-        else:
-            for p in self.A.keys():
-                if 'X' in list(p):
-                    self.X_index = p.index('X')
+        #if rot_A:
+        self.X_index = list(self.A.keys())[0].find('Z')
+        #else:
+        #    for p in self.A.keys():
+        #        if 'X' in list(p):
+        #            self.X_index = p.index('X')
         self.X_qubit = num_qubits-1-self.X_index
 
         ham_noncon = {}
@@ -175,17 +175,18 @@ class cs_vqe_circuit():
                     self.chem_acc_num_q = num_q
                     break
             order = heuristic[3]
+
         self.order, self.ham_reduced = cs.reduced_hamiltonian(order)
-        
+        #self.order=order
 
         # +1-eigenstate parameters
         self.init_state = cs.init_state()
         eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
         self.index_paulis = eig.P_index(q_pos=True)
-        if not rot_A:
-            #self.t1, self.t2 = eig.t_val(alt=True)
-            self.r1, self.r2 = self.A.values()
-            self.A1, self.A2 = self.A.keys()
+        #if not rot_A:
+        #    #self.t1, self.t2 = eig.t_val(alt=True)
+        #    self.r1, self.r2 = self.A.values()
+        #    self.A1, self.A2 = self.A.keys()
 
     def sim_qubits(self, num_sim_q, complement=False):
         """ Specifies which qubits of the full electronic structure problem are to be simulated
@@ -235,9 +236,8 @@ class cs_vqe_circuit():
         if input_ham is None:
             for g in self.G.keys():
                 reference_bits[self.num_qubits-1-g.find('Z')] = self.G[g]
-            if self.rot_A:
-                a = list(self.A.keys())[0]
-                reference_bits[self.num_qubits-1-a.find('Z')] = self.A[a]
+            a = list(self.A.keys())[0]
+            reference_bits[self.num_qubits-1-a.find('Z')] = self.A[a]
             blank_state = list(np.zeros(self.num_qubits, dtype=int))
             for q in reference_bits.keys():
                 index = self.num_qubits-1-q
@@ -266,8 +266,15 @@ class cs_vqe_circuit():
     def plot_cs_vqe_errors(self):
         X = range(0, self.num_qubits+1)
         Y = self.cs_vqe_errors
+        Y_compare = [self.gs_noncon_energy-self.true_gs]
+        for ham in self.ham_reduced[1:]:
+            ham_mat = qonvert.dict_to_WeightedPauliOperator(ham).to_matrix()
+            gs_vector = la.get_ground_state(ham_mat)
+            Y_compare.append(gs_vector[0]-self.true_gs)
+        self.ham_reduced
         fig, ax = plt.subplots()
         ax.plot(X, Y)
+        ax.plot(X, Y_compare)
         ax.hlines(0.0016, 0, self.num_qubits, color='pink')
         ax.set_xlabel('Number of qubits simulated')
         ax.set_ylabel('Error (Ha)')
@@ -771,8 +778,8 @@ class cs_vqe_circuit():
         vqe = VQE(qc, initial_point=init_anz_params, optimizer=optimizer, callback=self.store_intermediate_result, quantum_instance=qi)
         vqe_input_ham = qonvert.dict_to_WeightedPauliOperator(input_ham)
         gs_red = la.get_ground_state(vqe_input_ham.to_matrix())
-        #target_energy = gs_red[0]
-        target_energy = self.cs_vqe_energy[num_sim_q]
+        target_energy = gs_red[0]
+        #target_energy = self.cs_vqe_energy[num_sim_q]
         vqe_run = vqe.compute_minimum_eigenvalue(operator=vqe_input_ham)
 
         counts = deepcopy(self.counts)

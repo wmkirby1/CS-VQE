@@ -25,7 +25,8 @@ from qiskit_nature.converters.second_quantization import QubitConverter
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper, ParityMapper
 from qiskit_nature.circuit.library.initial_states.hartree_fock import hartree_fock_bitstring
 
-def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False):
+
+def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, sym_sector=None):
     """
     """
     # generate speciesname string from atoms
@@ -44,10 +45,10 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False):
     molecule_data = MolecularData(geometry, basis, multiplicity, charge, description=speciesname)
     delete_input = True
     delete_output = True
-    molecule = run_pyscf(molecule_data,run_scf=1,run_mp2=1,run_cisd=1,run_ccsd=1,run_fci=1)
-    num_electrons = molecule.n_electrons # total number of particles
-    num_particles = (   molecule.get_n_alpha_electrons(),
-                        molecule.get_n_beta_electrons()) # number of alpha (spin up) and beta (spin down) electrons
+    molecule = run_pyscf(molecule_data, run_ccsd=1)
+    num_electrons =molecule.n_electrons # total number of particles
+    num_particles =(molecule.get_n_alpha_electrons(),
+                    molecule.get_n_beta_electrons()) # number of alpha (spin up) and beta (spin down) electrons
     num_qubits = 2*molecule.n_orbitals
     # construct second quantised Hamiltonian:
     ham_2ndQ = get_fermion_operator(molecule.get_molecular_hamiltonian())
@@ -74,17 +75,20 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False):
         es_problem = ElectronicStructureProblem(driver)
         second_q_op = es_problem.second_q_ops()
         # Map Hamiltonian and UCCSD operators from OpenFermion to Qiskit Nature representation
-        ham_sq_mapped = qonvert.fermionic_openfermion_to_qiskit(ham_2ndQ, num_qubits)
-        ucc_sq_mapped = qonvert.fermionic_openfermion_to_qiskit(ucc_2ndQ, num_qubits)
+        ham_2ndQ_mapped = qonvert.fermionic_openfermion_to_qiskit(ham_2ndQ, num_qubits)
+        ucc_2ndQ_mapped = qonvert.fermionic_openfermion_to_qiskit(ucc_2ndQ, num_qubits)
 
         # Determine tapering stabilisers and (hopefully) correct sector with Qiskit Nature:
         qubit_converter = QubitConverter(JordanWignerMapper(), z2symmetry_reduction='auto')
-        ham_ref = qubit_converter.convert(ham_sq_mapped) # stores the Z2 symmetries in qubit_converter 
+        ham_ref = qubit_converter.convert(ham_2ndQ_mapped) # stores the Z2 symmetries in qubit_converter 
         taper_qubits = qubit_converter.z2symmetries.sq_list
         hf_config = ''.join([str(int(b)) for index,b in enumerate(hf_config_bool) if index not in taper_qubits])
         Z2sym = qubit_converter.z2symmetries.symmetries
-        Z2ref = es_problem.symmetry_sector_locator(qubit_converter.z2symmetries) #try to find the correct sector
-        
+        if sym_sector is None:
+            Z2ref = es_problem.symmetry_sector_locator(qubit_converter.z2symmetries) #try to find the correct sector
+        else:
+            Z2ref = sym_sector
+
         # list all possible sectors
         sectors = []
         for c in list(itertools.combinations_with_replacement([+1, -1], len(Z2ref))):
@@ -99,28 +103,27 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False):
             sectors_order.append((s, ham_dist))
         sectors=[a for a,b in sorted(sectors_order, key=lambda x:x[1])]
 
+        print('Attempting to taper %i --> %i qubits' % (num_qubits, num_qubits-len(Z2ref)))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         for Z2sec in sectors:
             # Perform Jordan-Wigner transformation and taper
             qubit_taper = QubitConverter(JordanWignerMapper(), z2symmetry_reduction=Z2sec)
-            ham_tap = qubit_taper.convert(ham_sq_mapped)
+            ham_tap = qubit_taper.convert(ham_2ndQ_mapped)
             pretap=la.get_ground_state(ham_ref.to_spmatrix())[0]
             postap=la.get_ground_state(ham_tap.to_spmatrix())[0]
 
             if postap-pretap<1e-6:
-                print('Energies match in sector %s, tapering successful!' % str(Z2sec))
+                print('Energies match in sector %s, tapering successful!\n' % str(Z2sec))
                 break
             else:
-                print('Energy mismatch in sector %s, trying another...' % str(Z2sec))
+                print('Energy mismatch with target problem in sector %s, trying another...' % str(Z2sec))
 
-        ucc_tap = qubit_taper.convert(ucc_sq_mapped)
+        ucc_q = QubitConverter(JordanWignerMapper()).convert(ucc_2ndQ_mapped)
+        ucc_tap = qubit_taper.z2symmetries.taper(ucc_q)
 
         num_qubits = ham_tap.num_qubits
-        ham = {}
-        for op in ham_tap.to_pauli_op():
-            ham[str(op)[str(op).index('*')+2:]] = op.coeff
-        ucc = {}
-        for op in ucc_tap.to_pauli_op():
-            ucc[str(op)[str(op).index('*')+2:]] = op.coeff
+        ham = qonvert.PauliOp_to_dict(ham_tap)
+        ucc = qonvert.PauliOp_to_dict(ucc_tap)
     
     return {'speciesname':speciesname,
             'num_qubits': num_qubits,
@@ -136,7 +139,13 @@ def get_molecule(speciesname, taper=False):
     with open('data/'+file+'.json', 'r') as json_file:
         molecule_data = json.load(json_file)
 
-    atoms, bond_len, coords, multiplicity, charge, basis = molecule_data[speciesname].values()
-    mol_out = construct_molecule(atoms, coords, charge, multiplicity, basis, taper)
+    atoms, coords, multiplicity, charge, basis, sym_sector = molecule_data[speciesname].values()
+    if sym_sector=="None":
+        sym_sector=None
+        print('*** sector not specified in molecule data, searching now ***')
+    else:
+        print('*** sector saved, will check tapered ground state energy matches target problem ***')
+    
+    mol_out = construct_molecule(atoms, coords, charge, multiplicity, basis, taper, sym_sector)
     
     return mol_out

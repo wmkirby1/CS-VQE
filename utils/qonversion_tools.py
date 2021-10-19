@@ -90,3 +90,10 @@ def fermionic_openfermion_to_qiskit(f_operator, num_qubits):
         mapped_f_ops.append(f_operator.terms[op]*FermionicOp(f_string, display_format="sparse", register_length=num_qubits))
 
     return sum(mapped_f_ops)
+
+
+def PauliOp_to_dict(operator):
+    op_dict = {}
+    for term in operator.to_pauli_op():
+        op_dict[str(term)[str(term).index('*')+2:]] = term.coeff
+    return op_dict
