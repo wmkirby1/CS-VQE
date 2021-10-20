@@ -127,6 +127,7 @@ class cs_vqe_circuit():
     # if True adds additional qubit to circuit
     ancilla = False
     red_anz_drop = False
+    init_param = []
     
     def __init__(self, hamiltonian, terms_noncon, num_qubits, hf_config, order=None):#, rot_G=True, rot_A=True):
         #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
@@ -442,7 +443,51 @@ class cs_vqe_circuit():
         #    self.red_anz_drop = False
         return proj_anz#, drop_pauli
 
-    
+    def project_anz_terms_alt(self,anz_terms,num_sim_q):
+        """
+        """
+        sim_indices = list(self.sim_qubits(num_sim_q)[1])
+        sim_complement = list(self.sim_qubits(num_sim_q, complement=True)[1])
+        proj_anz = {}
+        param=0
+
+        for op1 in anz_terms.keys():
+            original_param = anz_terms[op1]
+            rot_op = c_tools.rotate_operator(self.ham_rotations,{op1:anz_terms[op1]})
+            for op2 in rot_op.keys():
+                proj_pauli = [op2[i] for i in sim_complement]
+                if set(proj_pauli) in [{'I'},{'Z'},{'I', 'Z'}]:
+                    
+                    parity = proj_pauli.count('Z')%2
+                    sgn    = 1-2*parity
+                    sim_pauli_list = [op2[i] for i in sim_indices]
+                    sim_pauli = ''.join(sim_pauli_list)         
+                    coeff = sgn*rot_op[op2]
+                    ratio = rot_op[op2]/original_param
+                    
+                    if sim_pauli not in proj_anz:
+                        proj_anz[sim_pauli] = {"param":[param], 
+                                               "coeff":[coeff], 
+                                               "ratio":[ratio],
+                                               "initp":[anz_terms[op1]]}
+                    
+                    else:
+                        proj_anz[sim_pauli]["param"].append(param)
+                        proj_anz[sim_pauli]["coeff"].append(coeff)
+                        proj_anz[sim_pauli]["ratio"].append(ratio)
+            
+            param += 1
+            
+        param_lists = set([str(v['param']) for v in proj_anz.values()])
+        param_map = {lst:ParameterVector(name='P', length=len(param_lists))[index] for index, lst in enumerate(param_lists)}
+
+        for op in proj_anz.keys():
+            param_list = str(proj_anz[op]['param'])
+            proj_anz[op]['param'] = param_map[param_list]
+            proj_anz[op]['coeff'] = sum(proj_anz[op]['coeff'])
+            proj_anz[op]['ratio'] = sum(proj_anz[op]['ratio'])
+
+        return proj_anz
 
     ################################## circuit blocks #################################
     ## Below are circuit components that may be selected in the build_circuit method ##
@@ -485,12 +530,28 @@ class cs_vqe_circuit():
         q_map = self.qubit_map(num_sim_q)
 
         if anz_terms is not None:
-            anz_terms_reduced = self.project_anz_terms(anz_terms, num_sim_q)
+            anz_terms_reduced = self.project_anz_terms_alt(anz_terms, num_sim_q)
             if anz_terms_reduced == {}:
                 # because VQE requires at least one parameter...
-                qc.rz(Parameter('a'), 0)
+                raise Exception('No terms in the projected Ansatz')
             else:
-                qc = circ.circ_from_paulis(paulis=list(anz_terms_reduced.keys()), circ=qc, trot_order=2, dup_param=False)
+                p_ops=[]
+                param=[]
+                temp_param=(0,0)
+
+                for op, parameters in anz_terms_reduced.items():
+                    p_ops.append(op)
+    
+                    if temp_param[0] == parameters['param']:
+                        ratio = temp_param[1]/parameters['coeff']
+                        param.append(ratio*parameters['param'])
+                    else:
+                        param.append(parameters['param'])
+                        
+                    temp_param = (parameters['param'], parameters['coeff'])
+
+                #self.init_param = initv
+                qc = circ.circ_from_paulis(paulis=p_ops, params=param, circ=qc, trot_order=2, dup_param=False)
         else:
             qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=False)
 
@@ -693,7 +754,7 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, check_A=False, noise=False):
+    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, check_A=False, noise=False, show_amps=False):
         """ Runs CS-VQE for a given Ansatz operator and number of qubits to simulate
         """
         self.counts.clear()
@@ -701,20 +762,21 @@ class cs_vqe_circuit():
         self.values.clear()
         self.errors.clear()
 
-        self.plot_gs_amps(num_sim_q)
+        if show_amps:
+            self.plot_gs_amps(num_sim_q)
 
         qc = self.build_circuit(anz_terms, num_sim_q)
 
-        if anz_terms is not None:
-            anz_red = self.project_anz_terms(anz_terms, num_sim_q)
-            if anz_red != {}:
-                init_anz_params = np.array([(anz_red[p]).imag for p in anz_red.keys() if set(p)!={'I'}])
-                if len(init_anz_params) != qc.num_parameters:
-                    init_anz_params = np.append(init_anz_params, 0)  
-            else:
-                init_anz_params = np.zeros(qc.num_parameters)
+        #if anz_terms is not None:
+        #    anz_red = self.project_anz_terms(anz_terms, num_sim_q)
+        #    if anz_red != {}:
+        #        init_anz_params = np.array([(anz_red[p]) for p in anz_red.keys() if set(p)!={'I'}])
+        #        if len(init_anz_params) != qc.num_parameters:
+        #            init_anz_params = np.append(init_anz_params, 0)  
+        #    else:
+        #        init_anz_params = np.zeros(qc.num_parameters)
 
-        #init_anz_params = np.zeros(qc.num_parameters)
+        init_anz_params = np.zeros(qc.num_parameters)
         bounds = np.array([(p-param_bound, p+param_bound) for p in init_anz_params])
         qc.parameter_bounds = bounds
 
@@ -813,6 +875,43 @@ class cs_vqe_circuit():
                 'params':params,
                 'values':values,
                 'errors':errors}
+
+    
+    def sufficient_anz_terms(self, anz_terms):
+        """
+        """
+        num_sim_q = self.chem_acc_num_q
+        anz_list = []
+        error = 1
+        anz_ops=[]
+        avoid_op = []
+        while error >= 0.0016:
+            anz_list = []
+            for index, op in enumerate(anz_terms.keys()):
+                if (op not in avoid_op) and (op not in anz_ops):
+                    print('Testing operator %i/%i'%(index+1, len(anz_terms)))
+                    test_anz_ops = anz_ops + [op]
+                    anz = {op:anz_terms[op] for op in test_anz_ops}
+                    anz_red = self.project_anz_terms(anz, num_sim_q)
+                    if anz_red == {}:
+                        avoid_op.append(op)
+                    else:
+                        cs_vqe_results = self.CS_VQE(anz_terms=anz, 
+                                                     num_sim_q=num_sim_q, 
+                                                     optimizer=IMFIL(maxiter=10000), 
+                                                     param_bound=np.pi,
+                                                     noise=False)
+                        op_error = cs_vqe_results['result']-cs_vqe_results['true_gs']
+                        anz_list.append((op, op_error))
+            add_op, error = sorted(anz_list, key=lambda x:x[1])[0]
+            anz_ops.append(add_op)
+            
+            print(anz_ops)
+            print('------------------------------------------------------------')
+            print('Error with %i operator(s) in Ansatz = ' % len(anz_ops), error)
+            print('------------------------------------------------------------')
+
+        return anz_ops
 
 
     def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, iters=1, check_A=False, noise=False):

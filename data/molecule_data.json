@@ -14,15 +14,7 @@
     "multiplicity":1,
     "charge":0,
     "basis":"STO-3G",
-    "sym_sector": "None"
-    },
-"H12_STO-3G_SINGLET":{
-    "atoms": ["H", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"],
-    "coords":[[0,0,0],[1,0,0],[2,0,0],[3,0,0],[4,0,0],[5,0,0],[6,0,0],[7,0,0],[8,0,0],[9,0,0],[10,0,0],[11,0,0]],
-    "multiplicity":1,
-    "charge":0,
-    "basis":"STO-3G",
-    "sym_sector": "None"
+    "sym_sector":[-1, -1, 1]
     },
 "H2_6-31G_SINGLET":{
     "atoms": ["H", "H"],
@@ -31,7 +23,7 @@
     "multiplicity":1,
     "charge":0,
     "basis":"6-31g",
-    "sym_sector": "None"
+    "sym_sector":[-1, -1, 1]
     },
 "H2_6-311G_SINGLET":{
     "atoms": ["H", "H"],
@@ -40,7 +32,7 @@
     "multiplicity":1,
     "charge":0,
     "basis":"6-311g",
-    "sym_sector": "None"
+    "sym_sector":[-1, -1, 1]
     },
 "H3+_STO-3G_SINGLET":{
     "atoms": ["H", "H", "H"],
@@ -60,7 +52,7 @@
     "multiplicity":1,
     "charge":1,
     "basis":"3-21g",
-    "sym_sector": "None"
+    "sym_sector":[1, 1, -1]
     },
 "H3+_STO-3G_SINGLET_alt":{
     "atoms": ["H", "H", "H"],
@@ -70,7 +62,7 @@
     "multiplicity":1,
     "charge":1,
     "basis":"sto-3g",
-    "sym_sector": "None"
+    "sym_sector":[-1, 1, 1]
     },
 "HeH+_3-21G_SINGLET":{
     "atoms": ["He", "H"],
@@ -79,7 +71,7 @@
     "multiplicity":1,
     "charge":1,
     "basis":"3-21g",
-    "sym_sector": "None"
+    "sym_sector":[-1, 1]
     },
 "HeH+_3-21G_SINGLET_alt":{
     "atoms": ["He", "H"],
@@ -117,7 +109,7 @@
     "multiplicity":1,
     "charge":0,
     "basis":"sto-3g",
-    "sym_sector": "None"
+    "sym_sector":[1, -1, -1, 1]
     },
 "BeH+_STO-3G_SINGLET":{
     "atoms": ["Be", "H"],
@@ -177,15 +169,6 @@
                 [0.0000000,0.0000000,-0.9345950]],
     "multiplicity":1,
     "charge":1,
-    "basis":"sto-3g",
-    "sym_sector": "None"
-    },
-"F2_STO-3G_SINGLET":{
-    "atoms": ["F", "F"],
-    "coords":[  [0.0000000,	0.0000000,	0.6937880],
-                [0.0000000,	0.0000000,	-0.6937880]],
-    "multiplicity":1,
-    "charge":0,
     "basis":"sto-3g",
     "sym_sector": "None"
     },

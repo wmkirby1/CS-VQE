@@ -67,6 +67,9 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
         ham = qonvert.QubitOperator_to_dict(ham_q, num_qubits)
         ucc = qonvert.QubitOperator_to_dict(ucc_q, num_qubits)
         hf_config = ''.join([str(int(b)) for b in hf_config_bool])
+        num_tapered=0
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(ham).to_matrix()
+        true_gs_nrg, true_gs_vec = la.get_ground_state(ham_mat)
 
     else:
         # now we duplicate this electronic structure problem in Qiskit Nature for Z2 symmetry identification
@@ -88,6 +91,7 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
             Z2ref = es_problem.symmetry_sector_locator(qubit_converter.z2symmetries) #try to find the correct sector
         else:
             Z2ref = sym_sector
+        num_tapered = len(Z2ref)
 
         # list all possible sectors
         sectors = []
@@ -103,13 +107,14 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
             sectors_order.append((s, ham_dist))
         sectors=[a for a,b in sorted(sectors_order, key=lambda x:x[1])]
 
-        print('Attempting to taper %i --> %i qubits' % (num_qubits, num_qubits-len(Z2ref)))
+        print('Attempting to taper %i --> %i qubits' % (num_qubits, num_tapered))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        true_gs_nrg, true_gs_vec = la.get_ground_state(ham_ref.to_spmatrix())
+        pretap=true_gs_nrg
         for Z2sec in sectors:
             # Perform Jordan-Wigner transformation and taper
             qubit_taper = QubitConverter(JordanWignerMapper(), z2symmetry_reduction=Z2sec)
             ham_tap = qubit_taper.convert(ham_2ndQ_mapped)
-            pretap=la.get_ground_state(ham_ref.to_spmatrix())[0]
             postap=la.get_ground_state(ham_tap.to_spmatrix())[0]
 
             if postap-pretap<1e-6:
@@ -129,7 +134,10 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
             'num_qubits': num_qubits,
             'hamiltonian':ham,
             'uccsdansatz':ucc,
-            'hf_config':  hf_config}
+            'hf_config':  hf_config,
+            'num_tapered':num_tapered,
+            'true_gs_nrg':true_gs_nrg,
+            'true_gs_vec':true_gs_vec}
 
 
 def get_molecule(speciesname, taper=False):
@@ -140,11 +148,12 @@ def get_molecule(speciesname, taper=False):
         molecule_data = json.load(json_file)
 
     atoms, coords, multiplicity, charge, basis, sym_sector = molecule_data[speciesname].values()
-    if sym_sector=="None":
-        sym_sector=None
-        print('*** sector not specified in molecule data, searching now ***')
-    else:
-        print('*** sector saved, will check tapered ground state energy matches target problem ***')
+    if taper:
+        if sym_sector=="None":
+            sym_sector=None
+            print('*** sector not specified in molecule data, searching now ***')
+        else:
+            print('*** sector saved, will check tapered ground state energy matches target problem ***')
     
     mol_out = construct_molecule(atoms, coords, charge, multiplicity, basis, taper, sym_sector)
     
