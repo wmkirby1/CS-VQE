@@ -127,7 +127,7 @@ class cs_vqe_circuit():
     # if True adds additional qubit to circuit
     ancilla = False
     red_anz_drop = False
-    init_param = []
+    init_param = np.array([])
     
     def __init__(self, hamiltonian, terms_noncon, num_qubits, hf_config, order=None):#, rot_G=True, rot_A=True):
         #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
@@ -462,19 +462,21 @@ class cs_vqe_circuit():
                     sgn    = 1-2*parity
                     sim_pauli_list = [op2[i] for i in sim_indices]
                     sim_pauli = ''.join(sim_pauli_list)         
-                    coeff = sgn*rot_op[op2]
-                    ratio = rot_op[op2]/original_param
                     
-                    if sim_pauli not in proj_anz:
-                        proj_anz[sim_pauli] = {"param":[param], 
-                                               "coeff":[coeff], 
-                                               "ratio":[ratio],
-                                               "initp":[anz_terms[op1]]}
-                    
-                    else:
-                        proj_anz[sim_pauli]["param"].append(param)
-                        proj_anz[sim_pauli]["coeff"].append(coeff)
-                        proj_anz[sim_pauli]["ratio"].append(ratio)
+                    if set(sim_pauli)!={'I'}:
+                        coeff = sgn*rot_op[op2]
+                        ratio = rot_op[op2]/original_param
+
+                        if sim_pauli not in proj_anz:
+                            proj_anz[sim_pauli] = {"param":[param], 
+                                                   "coeff":[coeff], 
+                                                   "ratio":[ratio],
+                                                   "initp":[anz_terms[op1]]}
+
+                        else:
+                            proj_anz[sim_pauli]["param"].append(param)
+                            proj_anz[sim_pauli]["coeff"].append(coeff)
+                            proj_anz[sim_pauli]["ratio"].append(ratio)
             
             param += 1
             
@@ -528,30 +530,30 @@ class cs_vqe_circuit():
         """ Inserts gates effecting the reduced Ansatz operator
         """
         q_map = self.qubit_map(num_sim_q)
-
+        
         if anz_terms is not None:
             anz_terms_reduced = self.project_anz_terms_alt(anz_terms, num_sim_q)
             if anz_terms_reduced == {}:
                 # because VQE requires at least one parameter...
-                raise Exception('No terms in the projected Ansatz')
+                #raise Exception('No terms in the projected Ansatz')
+                qc.rz(ParameterVector('P', 1)[0], 0)
             else:
                 p_ops=[]
                 param=[]
                 temp_param=(0,0)
-
+                init_param = []         
                 for op, parameters in anz_terms_reduced.items():
                     p_ops.append(op)
-    
-                    if temp_param[0] == parameters['param']:
-                        ratio = temp_param[1]/parameters['coeff']
-                        param.append(ratio*parameters['param'])
-                    else:
-                        param.append(parameters['param'])
-                        
-                    temp_param = (parameters['param'], parameters['coeff'])
-
-                #self.init_param = initv
-                qc = circ.circ_from_paulis(paulis=p_ops, params=param, circ=qc, trot_order=2, dup_param=False)
+                    init_param.append(parameters['coeff'])
+                    
+                    #if temp_param[0] == parameters['param']:
+                    #    ratio = temp_param[1]/parameters['coeff']
+                    #    param.append(ratio*parameters['param'])
+                    #else:
+                    #    param.append(parameters['param'])   
+                    #temp_param = (parameters['param'], parameters['coeff'])
+                self.init_param = np.array(init_param)
+                qc = circ.circ_from_paulis(paulis=p_ops, circ=qc, trot_order=2, dup_param=False)
         else:
             qc += TwoLocal(num_sim_q, 'ry', 'cx', 'full', reps=2, insert_barriers=False)
 
@@ -675,6 +677,8 @@ class cs_vqe_circuit():
         for q in self.HF_config:
             qc.x(q_map[int(q)])
         qc = circ.circ_from_paulis(paulis=list(anz_terms.keys()), circ=qc, trot_order=2, dup_param=False)
+        self.cancel_pairs(circ=qc, hit_set={'s', 'sdg'})
+        self.cancel_pairs(circ=qc, hit_set={'h', 'h'})
         return qc
 
 
@@ -776,7 +780,9 @@ class cs_vqe_circuit():
         #    else:
         #        init_anz_params = np.zeros(qc.num_parameters)
 
-        init_anz_params = np.zeros(qc.num_parameters)
+        init_anz_params = self.init_param
+        if len(init_anz_params) != qc.num_parameters:
+                    init_anz_params = np.append(init_anz_params, 0)
         bounds = np.array([(p-param_bound, p+param_bound) for p in init_anz_params])
         qc.parameter_bounds = bounds
 
@@ -898,7 +904,7 @@ class cs_vqe_circuit():
                     else:
                         cs_vqe_results = self.CS_VQE(anz_terms=anz, 
                                                      num_sim_q=num_sim_q, 
-                                                     optimizer=IMFIL(maxiter=10000), 
+                                                     optimizer=IMFIL(maxiter=500), 
                                                      param_bound=np.pi,
                                                      noise=False)
                         op_error = cs_vqe_results['result']-cs_vqe_results['true_gs']

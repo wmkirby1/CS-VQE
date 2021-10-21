@@ -89,7 +89,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
         num_Z = range(num_qubits - 1)
     
     non_I = sorted(non_I)
-    
+
     # cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:
         circ.cx(non_I[i], non_I[i+1])

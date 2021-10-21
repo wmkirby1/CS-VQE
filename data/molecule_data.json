@@ -215,5 +215,22 @@
     "charge":0,
     "basis":"sto-3g",
     "sym_sector": "None"
-    }
+    },
+"NH_STO-3G_SINGLET":{
+    "atoms": ["N", "H"],
+    "coords":[  [0.0000000,0.0000000,0.1352370],
+                [0.0000000,0.0000000,-0.9466590]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"sto-3g",
+    "sym_sector":[-1,-1,1,1]
+    },
+"Ne_STO-3G_SINGLET":{
+    "atoms": ["Ne"],
+    "coords":[[0,0,0]],
+    "multiplicity":1,
+    "charge":0,
+    "basis":"sto-3g",
+    "sym_sector":[-1, 1, 1, -1, 1]
+    }   
 }

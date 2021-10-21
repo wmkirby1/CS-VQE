@@ -107,7 +107,7 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
             sectors_order.append((s, ham_dist))
         sectors=[a for a,b in sorted(sectors_order, key=lambda x:x[1])]
 
-        print('Attempting to taper %i --> %i qubits' % (num_qubits, num_tapered))
+        print('Attempting to taper %i --> %i qubits' % (num_qubits, num_qubits-num_tapered))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         true_gs_nrg, true_gs_vec = la.get_ground_state(ham_ref.to_spmatrix())
         pretap=true_gs_nrg
