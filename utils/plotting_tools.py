@@ -1,10 +1,12 @@
 import math
 import itertools
+import numpy as np
 import matplotlib.pyplot as plt
 import cs_vqe_classes.cs_vqe_circuit as cs_circ
 from statistics import median
 from copy import deepcopy
 
+plt.style.use('ggplot')
 
 def factor_int(n):
     val = math.ceil(math.sqrt(n))
@@ -141,22 +143,28 @@ def plot_cs_vqe_convergence_alt(data, title=None, max_num_plots=None,x=None,y=No
 
     for index, grid in enumerate(grids):
         if max_num_plots is None:
-            if type(grid) != tuple:
+            if y!=1 and type(grid) != tuple:
                 grid_ref = str(tuple(grid))
                 grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
             else:
                 grid_ref = grid
         else:
-            if plot_index is None:
-                grid_ref = str(tuple(grid_map[index]))
-                grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
+            if y!=1:
+                if plot_index is None:
+                    grid_ref = str(tuple(grid_map[index]))
+                    grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
+                else:
+                    i = plot_index[index]
+                    grid_ref = str(tuple(grid_map[i]))
+                    grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
             else:
-                i = plot_index[index]
-                grid_ref = str(tuple(grid_map[i]))
-                grid_ref = tuple(map(int, grid_ref[1:-1].split(', ')))
+                grid_ref = grid
 
-        vqe_result = data[str(grid_ref)]
-        
+        if y!=1:
+            vqe_result = data[str(grid_ref)]
+        else:
+            vqe_result = data[grid_ref]
+            
         X = vqe_result['counts']
         Y = vqe_result['values']
         
@@ -225,4 +233,149 @@ def plot_cs_vqe_convergence_alt(data, title=None, max_num_plots=None,x=None,y=No
 
     #fig.suptitle(title, fontsize=20, y=0.96)
     
+    return fig
+
+
+def plot_parameter_settings(data, title=None):
+    """
+    """
+    params = list(data['params'].keys())
+    num_params = len(params)
+
+    fig, axs = plt.subplots(nrows = 2, ncols = 1,
+                            sharex=True,
+                            figsize=(8, 8))
+
+    axs[0].set_title('Parameter settings')
+    for index, p in enumerate(params):
+        c = plt.cm.jet(index/(num_params))
+        axs[0].plot(data['counts'], data['params'][p], label=p, color=c)
+    axs[0].set_ylabel('Parameter value')
+
+    X, Y = data['counts'], data['values']
+
+    axs[1].set_title('Optimiser output')
+    axs[1].plot(X, Y, color='black')
+    axs[1].set_xlabel('Optimisation count')
+    axs[1].set_ylabel('Energy (Ha)')
+
+    # plot results in corresponding subfigure
+    l1 = axs[1].plot(X, Y, color='black', zorder=2, label='CS-VQE optimisation')
+    # creating legend labels for target and convergence value
+    l2 = axs[1].plot([1], [data['gs_noncon_energy']], color='r', zorder=0, label='Noncontextual ground state energy')
+    l3 = axs[1].plot([1], [data['true_gs']], color='g', zorder=1, label='True ground state energy')
+    l4 = axs[1].plot([1], [data['target']], color='purple', ls='--', zorder=3, label='Target Value')
+    l5 = axs[1].plot([1], [data['result']], color='b', ls='--', zorder=4, label='Convergence Value')
+    l6 = axs[1].plot([1], [data['true_gs']+0.0016], color='pink', zorder=5, label='Chemical accuracy')
+            
+
+    # plotting zoomed portion of graph to observe convergence
+    X_zoom = []
+    Y_zoom = []
+    for index, t in enumerate(Y):
+        if t-0.01 < data['gs_noncon_energy']:
+            X_zoom.append(X[index])
+            Y_zoom.append(t)
+
+    if X_zoom == []:
+        X_zoom = [1, 2]
+        Y_zoom = [0, 0]
+
+    # location for the zoomed portion
+    ax_box = axs[1].get_position()
+    ax_origin = (ax_box.get_points())[1]
+    sf_size = 0.2
+    sub_axes = plt.axes([ax_origin[0]-sf_size*1.4, ax_origin[1]-sf_size*1.3, sf_size*1.4, sf_size*1.3])
+
+    # plot the zoomed portion
+    sub_axes.set_ylim((data['true_gs']-0.01, data['gs_noncon_energy']+0.01))
+    sub_axes.plot(X_zoom, Y_zoom, color='black')
+    # lines fixed at noncontextual ground energy and true ground energy
+    sub_axes.hlines(data['gs_noncon_energy'], X_zoom[0], X_zoom[-1], label='test',color='r')
+    sub_axes.hlines(data['true_gs'], X_zoom[0], X_zoom[-1], color='g')
+    sub_axes.hlines(data['true_gs']+0.0016, X_zoom[0], X_zoom[-1], color='pink')
+    # plotting the target value given the number of qubits simulated
+    sub_axes.hlines(data['target'], X_zoom[0], X_zoom[-1], color='purple', ls='--')
+    sub_axes.text(x=median(X_zoom), y=data['target']-0.005, s= 'target = '+str(round(data['target'], 4)), size='small')
+    # plotting the convergence value
+    if data['result']<data['gs_noncon_energy']+0.1:
+        sub_axes.hlines(data['result'], X_zoom[0], X_zoom[-1], color='b', ls='--')
+        sub_axes.text(x=X_zoom[0], y=data['result']-0.005, s= 'min = '+str(round(Y[-1], 4)), size='small')
+    #sub_axes.hlines(vqe_result['projected_target'], X_zoom[0], X_zoom[-1], color='orange', ls='--')
+
+    axs[0].legend(loc="right",   # Position of legend
+            borderaxespad=0.1,    # Small spacing around legend box
+            ncol=3,
+            bbox_to_anchor=(1.5, 0.5),
+            fancybox=True, 
+            shadow=True)
+
+    axs[1].legend(loc="right",   # Position of legend
+            borderaxespad=0.1,    # Small spacing around legend box
+            ncol=1,
+            bbox_to_anchor=(1.5, 0.5),
+            fancybox=True, 
+            shadow=True)
+
+    if title is not None:
+        fig.suptitle(title, fontsize=15, y=0.98)
+
+    return fig
+
+
+def plot_parameter_settings_alt(data, title=None):
+    """
+    """
+    params = list(data['params'].keys())
+    num_params = len(params)
+
+    fig, axs = plt.subplots(nrows = 2, ncols = 1,
+                            sharex=True,
+                            figsize=(8, 8))
+
+    axs[1].set_title('Parameter settings')
+    for index, p in enumerate(params):
+        c = plt.cm.jet(index/(num_params))
+        axs[1].plot(data['counts'], data['params'][p], label=p, color=c, linewidth=1)
+    axs[1].set_xlabel('Optimisation count')
+    axs[1].set_ylabel('Parameter value')
+
+    X, Y = data['counts'], [data['values']]
+    Y = [v-data['true_gs'] for v in data['values']]
+    
+    axs[0].set_title('%s %s optimiser output'%(data['backend'],data['optimiser']))
+    axs[0].set_ylabel('Error (Ha)')#'Energy (Ha)')
+
+    # plot results in corresponding subfigure
+    l1 = axs[0].plot(X, Y, color='black', label='CS-VQE optimisation', linewidth=1)
+    
+    if data['errors']:
+        stddev_upper = [a+b for a,b in list(zip(Y, data['errors']))]
+        stddev_lower = [a-b for a,b in list(zip(Y, data['errors']))]
+        axs[0].fill_between(X, stddev_lower, stddev_upper,alpha=0.8, label='Standard deviation')
+    # creating legend labels for target and convergence value
+    #l2 = axs[1].plot([1], [data['gs_noncon_energy']], color='r', zorder=0, label='Noncontextual ground state energy')
+    l2 = axs[0].hlines(data['result']-data['true_gs'],0,X[-1], color='b', ls=':', label='Convergence Value')
+    l3 = axs[0].hlines(0.0016,0,X[-1], color='green',label='Chemical accuracy')
+    #l4 = axs[0].hlines(data['true_gs'], 0, X[-1], color='g', label='True ground state energy')
+    #l4 = axs[1].plot([1], [data['target']], color='purple', ls='--', zorder=3, label='Target Value')
+    
+    
+    axs[1].legend(loc="right",   # Position of legend
+            borderaxespad=0.1,    # Small spacing around legend box
+            ncol=3,
+            bbox_to_anchor=(1.5, 0.5),
+            fancybox=True, 
+            shadow=True)
+
+    axs[0].legend(loc="right",   # Position of legend
+            borderaxespad=0.1,    # Small spacing around legend box
+            ncol=1,
+            bbox_to_anchor=(1.38, 0.5),
+            fancybox=True, 
+            shadow=True)
+
+    if title is not None:
+        fig.suptitle(title, fontsize=15, y=0.98)
+
     return fig

@@ -1,4 +1,4 @@
-import utils.cs_vqe_tools as c
+import utils.cs_vqe_tools_original as c
 import utils.qonversion_tools as qonvert
 #from openfermion.linalg import get_ground_state
 import utils.linalg_tools as la
@@ -52,13 +52,13 @@ class cs_vqe:
     init_state
         Determing the reference state of the ansatz
     """
-    def __init__(self, ham, terms_noncon, num_qubits, rot_G=True, rot_A=False):
+    def __init__(self, ham, terms_noncon, num_qubits):#, rot_G=True, rot_A=False):
         assert(type(ham)==dict)
         self.ham = ham
         self.terms_noncon = terms_noncon
         self.num_qubits = num_qubits
-        self.rot_A = rot_A
-        self.rot_G = rot_G
+        #self.rot_A = rot_A
+        #self.rot_G = rot_G
 
 
     # required for the following methods - use get_ham to retrieve hamiltonians in practice
@@ -146,9 +146,10 @@ class cs_vqe:
         -------
         """
         if not rot_override:
-            return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state(),rot_A=self.rot_A))[0]
+            return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state()))[0]
         else:
             return (c.diagonalize_epistemic(self.model(),self.fn_form(),self.ep_state(),rot_A=False))[0]
+
 
     # get the noncontextual and contextual Hamiltonians
     def get_ham(self, h_type='full'):
@@ -175,8 +176,8 @@ class cs_vqe:
         else:
             raise ValueError('Invalid value given for h_type: must be full, noncon or context')
         
-        if self.rot_G:
-            ham_ref = c.rotate_operator(self.rotations(), ham_ref)
+        #if self.rot_G:
+        ham_ref = c.rotate_operator(self.rotations(), ham_ref)
 
         return ham_ref
 
@@ -201,9 +202,9 @@ class cs_vqe:
         G_list  = {g:ep[0][index] for index, g in enumerate(mod[0])}
         A_obsrv = {Ci1:ep[1][index] for index, Ci1 in enumerate(mod[1])}
 
-        if self.rot_G:
-            G_list  = c.rotate_operator(self.rotations(), G_list)
-            A_obsrv = c.rotate_operator(self.rotations(), A_obsrv)
+        
+        G_list  = c.rotate_operator(self.rotations(), G_list)
+        A_obsrv = c.rotate_operator(self.rotations(), A_obsrv)
 
         return G_list, A_obsrv
 
@@ -245,7 +246,7 @@ class cs_vqe:
             order = list(range(self.num_qubits))
         order_ref = deepcopy(order)
         
-        ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order_ref,self.rot_A)
+        ham_red = c.get_reduced_hamiltonians(self.ham,self.model(),self.fn_form(),self.ep_state(),order_ref)#,self.rot_A)
         
         if num_sim_q is None:
             return ham_red

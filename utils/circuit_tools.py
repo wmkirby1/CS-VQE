@@ -89,7 +89,7 @@ def exp_P(p_string, control=None, circ=None, rot=0):
         num_Z = range(num_qubits - 1)
     
     non_I = sorted(non_I)
-    
+
     # cascade of CNOT gates between adjacent non-identity qubits
     for i in num_Z:
         circ.cx(non_I[i], non_I[i+1])
@@ -147,14 +147,14 @@ def circ_from_paulis(init_state=[], paulis=[], params=[], rots=[], circ=None, tr
     """
     
     # parameters to be optimised in VQE routine
-    if params == []:
-        param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
-        params = [] 
-        for comb in list(itertools.combinations(param_chars, 3)):
-            char_str = ''.join(comb)
-            params.append(Parameter(char_str))
     #if params == []:
-    #    params = ParameterVector('P', len(paulis))
+    #    param_chars = ['α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ','ν','ξ','ο','π','ρ','ς','σ','τ','υ','φ','χ','ψ','ω']
+    #    params = [] 
+    #    for comb in list(itertools.combinations(param_chars, 3)):
+    #        char_str = ''.join(comb)
+    #        params.append(Parameter(char_str))
+    if params == []:
+        params = ParameterVector('P', len(paulis))
 
     #initiate quantum state (usually Hartree Fock)
     if circ is None:
