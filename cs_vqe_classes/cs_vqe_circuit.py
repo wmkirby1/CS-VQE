@@ -781,8 +781,8 @@ class cs_vqe_circuit():
         #        init_anz_params = np.zeros(qc.num_parameters)
 
         init_anz_params = self.init_param
-        if len(init_anz_params) != qc.num_parameters:
-                    init_anz_params = np.append(init_anz_params, 0)
+        while len(init_anz_params) != qc.num_parameters:
+            init_anz_params = np.append(init_anz_params, 0)
         bounds = np.array([(p-param_bound, p+param_bound) for p in init_anz_params])
         qc.parameter_bounds = bounds
 
