@@ -119,13 +119,16 @@ def remote_VQE(operator, qc, init_params):
     return job.result()
 
 
-def remote_circuit_execution(mol_circ, num_sim_q, anz_op, backend='ibmq_qasm_simulator', maxiter=100, qfi_resamples=100):
+def remote_circuit_execution(mol_circ, num_sim_q, anz_op, backend='ibmq_qasm_simulator', maxiter=100, qfi_resamples=100, zero_params=False):
     #assert(type(operator)==dict)
     assert(type(mol_circ)==cs_vqe_circuit)
     
     ham_red     = mol_circ.ham_reduced[num_sim_q]
     qc          = mol_circ.build_circuit(anz_op, num_sim_q)
-    init_params = mol_circ.init_param
+    if zero_params:
+        init_params=np.zeros(qc.num_parameters)
+    else:
+        init_params = mol_circ.init_param
 
     interim_info = {'numfev': [],
                     'params': [],

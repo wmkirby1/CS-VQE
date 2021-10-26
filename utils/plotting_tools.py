@@ -323,7 +323,7 @@ def plot_parameter_settings(data, title=None):
     return fig
 
 
-def plot_parameter_settings_alt(data, title=None):
+def plot_parameter_settings_alt(data, title=None, log_error=False):
     """
     """
     params = list(data['params'].keys())
@@ -342,21 +342,30 @@ def plot_parameter_settings_alt(data, title=None):
 
     X, Y = data['numfev'], [data['energy']]
     Y = [v-data['truegs'] for v in data['energy']]
-    
+
     axs[0].set_title('%s %s optimiser output'%(data['backnd'],data['optmzr']))
     axs[0].set_ylabel('Error (Ha)')#'Energy (Ha)')
 
     # plot results in corresponding subfigure
-    l1 = axs[0].plot(X, Y, color='black', label='CS-VQE optimisation', linewidth=1)
-    
     if data['stddev']:
         stddev_upper = [a+b for a,b in list(zip(Y, data['stddev']))]
         stddev_lower = [a-b for a,b in list(zip(Y, data['stddev']))]
+        if log_error:
+            stddev_upper = [np.log10(abs(s)) for s in stddev_upper]
+            stddev_lower = [np.log10(abs(s)) for s in stddev_lower]
         axs[0].fill_between(X, stddev_lower, stddev_upper,alpha=0.8, label='Standard deviation')
+    
+    convrge = data['result']-data['truegs']
+    chemacc = 0.0016
+    if log_error:
+        Y = [np.log10(abs(y)) for y in Y]
+        convrge = np.log10(abs(convrge))
+        chemacc = np.log10(chemacc)
     # creating legend labels for target and convergence value
     #l2 = axs[1].plot([1], [data['noncon']], color='r', zorder=0, label='Noncontextual ground state energy')
-    l2 = axs[0].hlines(data['result']-data['truegs'],0,X[-1], color='b', ls=':', label='Convergence Value')
-    l3 = axs[0].hlines(0.0016,0,X[-1], color='green',label='Chemical accuracy')
+    l1 = axs[0].plot(X, Y, color='black', label='CS-VQE optimisation', linewidth=1)
+    l2 = axs[0].hlines(convrge,0,X[-1], color='b', ls=':', label='Convergence Value')
+    l3 = axs[0].hlines(chemacc,0,X[-1], color='green',label='Chemical accuracy')
     #l4 = axs[0].hlines(data['truegs'], 0, X[-1], color='g', label='True ground state energy')
     #l4 = axs[1].plot([1], [data['target']], color='purple', ls='--', zorder=3, label='Target Value')
     
