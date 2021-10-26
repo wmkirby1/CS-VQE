@@ -73,9 +73,9 @@ class cs_vqe_circuit():
         Index of the X qubit in A2
     X_qubit : int
         Qubit position of the X qubit in A2
-    gs_noncon_energy : float
+    noncon : float
         The noncontextual ground state energy
-    true_gs : float
+    truegs : float
         The true ground state energy of the full Hamiltonian
     order : list
         Qubit inclusion ordering - should be optimal from cs_tools
@@ -150,8 +150,8 @@ class cs_vqe_circuit():
         generators = cs.generators()
 
         # defined here so only executed once instead of at each call
-        self.gs_noncon_energy = cs.gs_noncon_energy()
-        self.true_gs = cs.true_gs()[0]
+        self.noncon = cs.gs_noncon_energy()
+        self.truegs = cs.true_gs()[0]
         self.G = generators[0]
         self.A = generators[1] 
 
@@ -168,7 +168,7 @@ class cs_vqe_circuit():
             ham_noncon[t] = hamiltonian[t]
 
         if order is None:
-            heuristic = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.true_gs)
+            heuristic = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.truegs)
             self.cs_vqe_energy = heuristic[1]
             self.cs_vqe_errors = heuristic[2]
             for num_q, e in enumerate(heuristic[2]):
@@ -267,11 +267,11 @@ class cs_vqe_circuit():
     def plot_cs_vqe_errors(self):
         X = range(0, self.num_qubits+1)
         Y = self.cs_vqe_errors
-        Y_compare = [self.gs_noncon_energy-self.true_gs]
+        Y_compare = [self.noncon-self.truegs]
         for ham in self.ham_reduced[1:]:
             ham_mat = qonvert.dict_to_WeightedPauliOperator(ham).to_matrix()
             gs_vector = la.get_ground_state(ham_mat)
-            Y_compare.append(gs_vector[0]-self.true_gs)
+            Y_compare.append(gs_vector[0]-self.truegs)
         self.ham_reduced
         fig, ax = plt.subplots()
         ax.plot(X, Y)
@@ -490,6 +490,9 @@ class cs_vqe_circuit():
             proj_anz[op]['ratio'] = sum(proj_anz[op]['ratio'])
 
         return proj_anz
+
+    #def project_anz_terms_alt_2(self,anz_terms,num_sim_q):
+
 
     ################################## circuit blocks #################################
     ## Below are circuit components that may be selected in the build_circuit method ##
@@ -873,14 +876,14 @@ class cs_vqe_circuit():
                 'result':vqe_run.optimal_value,
                 'target':target_energy,
                 'projected_target':proj_energy,
-                'gs_noncon_energy':self.gs_noncon_energy, 
-                'true_gs':self.true_gs,
+                'noncon':self.noncon, 
+                'truegs':self.truegs,
                 'A_expct':A_expct,
                 #'drop_pauli':drop_pauli,
-                'counts':counts,
+                'numfev':counts,
                 'params':params,
-                'values':values,
-                'errors':errors}
+                'energy':values,
+                'stddev':errors}
 
     
     def sufficient_anz_terms(self, anz_terms):
@@ -907,7 +910,7 @@ class cs_vqe_circuit():
                                                      optimizer=IMFIL(maxiter=500), 
                                                      param_bound=np.pi,
                                                      noise=False)
-                        op_error = cs_vqe_results['result']-cs_vqe_results['true_gs']
+                        op_error = cs_vqe_results['result']-cs_vqe_results['truegs']
                         anz_list.append((op, op_error))
             add_op, error = sorted(anz_list, key=lambda x:x[1])[0]
             anz_ops.append(add_op)
@@ -938,8 +941,8 @@ class cs_vqe_circuit():
         self.cs_vqe_results = { 'rows':rows, 
                                 'cols':cols,
                                 'grid_pos':grid_pos,
-                                'gs_noncon_energy':self.gs_noncon_energy, 
-                                'true_gs':self.true_gs, 
+                                'noncon':self.noncon, 
+                                'truegs':self.truegs, 
                                 'num_qubits':self.num_qubits,
                                 'X_index':self.X_index}
 
