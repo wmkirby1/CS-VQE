@@ -1,0 +1,16 @@
+{
+  "id": "c5sopkikh8krlc7er3i0",
+  "hub": "ibm-q",
+  "group": "open",
+  "project": "main",
+  "backend": "ibmq_qasm_simulator",
+  "status": "Completed",
+  "params": [
+    "{\"ansatz\": {\"__type__\": \"QuantumCircuit\", \"__value__\": \"eJwL9Az29gxhZBBiZoAARgYBBgRgQWMzQtnyyZlFyaWZJbpGBsamZoZGFnmlOTmFjGBVjIVwoxgYmICYGW4EK5IMMohwTyxJLQRLEFTCwMCOQ0lwSjpMETNOczwQSogwh4mwOUzEmIPb6x4kKGFkYIMKMaEpcUYED7EKGSGOJ6yQCRJabFCXobsuKAoeoqlQIX80jyj4luZoeOaVpKanFmnoGmrqKARX5ibl52ioB0QbxKprahbATWNZeujgM9EXnqpT/nA+LZwfkghSQZojqeRtogNyNMSp5G0G/CWAB+HMHUxC/sedtYNJyP24c20wyRkbf1wzwKJMmIHx0wF/5ppLrl5bP/I5bJeuW5gEAENAjx0=\"}, \"operator\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.opflow.primitive_ops.pauli_sum_op\", \"__class__\": \"PauliSumOp\", \"__value__\": {\"primitive\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.sparse_pauli_op\", \"__class__\": \"SparsePauliOp\", \"__value__\": {\"data\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.pauli_table\", \"__class__\": \"PauliTable\", \"__value__\": {\"data\": {\"__type__\": \"ndarray\", \"__value__\": \"eJydUjtOxEAM9Ws5xXQDUppIFIgD0IFoKKhQYIMoEIuSFQ1wCi7Mrsaf52Er8lFiz/h97Pm5ubu+vYd8yGfdzOvTUi9L/Xoc61Dq83bZLdPbw3bZzIf81fS6zvv8+jK9z/v4dDwfh3JxNpTv8s/rRPKF9BFAQ3RpHF9uCd+mv9D9VIZUHqTIcC32Mo8dFonWYvGv0UHpcIy+JQgmXNkDguNWIctRbqfV9WganNY0/oFLjDnwl5CQkLvbNeQh+Wr76+xHi0BL5pRHbjhRzfZ5SpA8RfBUnCLQxNUgBDBUNtjZhHRCGzrVGLuQCig+t8VUZbQ4O0DyHD1MPeBUnqCpRjpl3hN3762PI6+LQKgXNyEchnuhMJZ9twmzV4JDIbyWYEAGaE/AH55fvmMdwg==\"}}}, \"coeffs\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2xopq6joJ6WX1RSlJgXn1+UkgqScEvMKU4FihdnJBakAvkahiaGOpo6CrUK5AIupS1bfpz6LX2AAQrO67VNmZtwfT+Mf4n1Mgpfv1hX76HKXnsYf/p/iRZz+dNw/oX7EX1/9m2Hq39VEyXG/mkdnP/wy/O1PDoI/Qe5VzYj619gUymJrP6p788JyOah6z+2xTSjaMVWOH+J9rHi3xfXwNV/DrPNR+Yv2fp5o2bOfrj68hMPDQ50T4bzuQr8fpx7kw3nJy1aaIEsz4Imn+douX3J4U44/1tB98wJ6UkI/5glNqapNcH5+zYf/Ov8LhLO730Vp/tcpA3Obw7Z+MuuJx7OP4fGf/25RAtZ/R8085QKUe1PDNMuQ7Y/sZx1A7J7P9tcW/4yHyF/pnvNpX/aXXB+4zmp9a9uIfyf+vbCp7C8NqrpN73x3/BbfxWcHyEZcaDlZxDR8tvO1Gogy7eSKC+2n2X5Ra4OOP/rnRzZvPhoOF99sctfzu3pcL7rvT93kPmm834H/+1ohfMf7zflWaWTCOcnt6z03tlrDOffvqisf/GDA5zvJ1CTFXUkDs7fiCZvZtQx23vaAnj6ZVR5zfAwKw0nH129gKV1rpa/B5xf9nrH/z2zF+LkP9oUpaONpF5Z/mMTcnhMRPNPO6dZBLL/p6P5R3dX9zrk8OU5gBo+TotNlR4LXNwL46fJ55369xIhj87fv3NCmKtEw35y+Tu0vX2+T7eEm7crXukOsvlf0eRJVY8ens/2lC5CDv8US19GfPH1A009unno6tHNY/RcLW60oR5RXgYb875YFEa0vHgIKv/ODxMJZPWE5AumascY5SDiu1SIt8nnXDRO/tqjC2aKi2fA+YZpuwrMHrQSLY9u34WLmx4hxw96/BGSR49fQvGNzl/UeM78aVUEOh8ePnVKR7PLlBrR+XD1d450OfJNm78fjY8uj1s9mv2niucUItsH5dujqYfL53zoW7lI1AnOv5cj2vs5INOeWPlKXvWzd9IR9uHgo6tHlB9o5u+M3TsH2Xx0Prp6AFr8Vj0=\"}}}, \"coeff\": 1.0, \"grouping_type\": \"None\"}}, \"optimizer\": {\"name\": \"QN-SPSA\", \"maxiter\": 150, \"resamplings\": {\"10\": 100}}, \"initial_parameters\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2ahrqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RpGOpo6CrUKFAAuBjQAAAonG10=\"}, \"measurement_error_mitigation\": true}"
+  ],
+  "program": {
+    "id": "vqe"
+  },
+  "created": "2021-10-27T17:30:58.120379Z",
+  "runtime": "qiskit-program:a059b14"
+}
