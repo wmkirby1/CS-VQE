@@ -874,6 +874,7 @@ class cs_vqe_circuit():
         return {'num_sim_q':num_sim_q,
                 'sim_qubits':sim_qubits,
                 'result':vqe_run.optimal_value,
+                'outdist':[abs(e)**2 for e in vqe_run.eigenstate],
                 'target':target_energy,
                 'projected_target':proj_energy,
                 'noncon':self.noncon, 

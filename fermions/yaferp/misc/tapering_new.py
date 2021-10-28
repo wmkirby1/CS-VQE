@@ -3,6 +3,9 @@ import scipy
 import sympy
 import scipy.linalg
 import copy
+import utils.qonversion_tools as qonvert
+import utils.linalg_tools as la
+import utils.bit_tools as bit
 import fermions.yaferp.general.fermions as fermions
 import fermions.yaferp.general.sparseFermions as sparseFermions
 
@@ -199,11 +202,13 @@ PAULI_STRINGS_LOOKUP = {'I':0,
                         'X':1,
                         'Y':2,
                         'Z':3}
+
 def oplistHC(oplist): #probably code to do this more robustly somewhere else but i've lost track
     result = []
     for term in oplist:
         result.append(copy.deepcopy([term[0].conjugate(),term[1]]))
     return result
+
 def parametrisedOplistRemoveNegligibles(oplist):
     '''TODO: this desperately needs to go somewhere else.  also it'll probably break from FP errors at some point'''
     newOplist = []
@@ -212,6 +217,7 @@ def parametrisedOplistRemoveNegligibles(oplist):
         if sympy.simplify(coeff) != 0:
             newOplist.append(term)
     return newOplist
+
 def transformedHamiltonian(oplist,kernelBasis=None):
     if kernelBasis is None:
         kernelBasis = oplistParityKernel(oplist)
@@ -250,15 +256,16 @@ def stabEigvals(oplist,hfStateIndex,kernelBasis=None,explicitEigvals=False):
 
 def stabEigvalsExplicit(oplist,thing):
     eigvals = []
-    hfGroundState = hfDegenerateGroundState(oplist)
+    hfGroundState = hfDegenerateGroundState(oplist)[0]
     for generator in thing:
         thisOplist = [[1.,generator]]
         assert not any(x in generator for x in [1,2])
         thisExpVal = sparseFermions.oplistExpectation(thisOplist,hfGroundState).todense()[0,0]
         eigvals.append(thisExpVal)
     return eigvals
+
 def hfDegenerateGroundState(oplist):
-    oplistDiag = [x for x in oplist if 2 not in x[1] and 1 not in x[1]]
+    oplistDiag = [x for x in oplist if 2 not in x[1] and 1 not in x[1]] 
     mat = sparseFermions.commutingOplistToMatrix(oplistDiag)
     matDiag = mat.diagonal()
     hfEnergy = matDiag.min()
@@ -267,10 +274,8 @@ def hfDegenerateGroundState(oplist):
     fullSpace = mat.shape[0]
     matDat = [normalization]*len(indices)
     hfState = scipy.sparse.csc_matrix((matDat,(indices,[0]*len(indices))),shape=(fullSpace,1),dtype=numpy.complex128)
-    print(indices)
-    return hfState
-
-
+    #print(indices)
+    return hfState, indices
 
 def replaceOperators(transformedOplist,xOperatorIndices,eigenvalues):
     newOplist = []
@@ -297,7 +302,7 @@ def getXOperatorIndices(xOperators):
         result.append(thing.index(1))
     return result
 
-def reducedHamiltonian(oplist,hfStateIndex,kernelBasis=None,explicitEigvals=False):
+def reducedHamiltonian(oplist,anzlist,hfStateIndex,kernelBasis=None,explicitEigvals=False):
     if kernelBasis is None:
         kernelBasis = oplistParityKernel(oplist)
     generators = gMatrixToPauliStrings(kernelBasis)
@@ -305,14 +310,20 @@ def reducedHamiltonian(oplist,hfStateIndex,kernelBasis=None,explicitEigvals=Fals
     xOperators = [x[0][1] for x in thing]
 
     xOperatorIndices = getXOperatorIndices(xOperators)
-    transformed = transformedHamiltonian(oplist,kernelBasis)
+    transformed_ham = transformedHamiltonian(oplist,kernelBasis)
+    transformed_anz = transformedHamiltonian(anzlist,kernelBasis)
+
     eigvals = stabEigvals(oplist,hfStateIndex,kernelBasis,explicitEigvals)
-    reducedHam = replaceOperators(transformed,xOperatorIndices,eigvals)
+    reducedHam = replaceOperators(transformed_ham,xOperatorIndices,eigvals)
+    reducedAnz = replaceOperators(transformed_anz,xOperatorIndices,eigvals)
+
     if isinstance(reducedHam[0][0], sympy.Basic): #clunky af hack to deal with parametrised data (ie ansatzes)
-        result = parametrisedOplistRemoveNegligibles(fermions.simplify(reducedHam))
+        result_ham = parametrisedOplistRemoveNegligibles(fermions.simplify(reducedHam))
+        result_anz = parametrisedOplistRemoveNegligibles(fermions.simplify(reducedAnz))
     else:
-        result = fermions.oplistRemoveNegligibles(fermions.simplify(reducedHam),1e-12)
-    return result
+        result_ham = fermions.oplistRemoveNegligibles(fermions.simplify(reducedHam),1e-12)
+        result_anz = fermions.oplistRemoveNegligibles(fermions.simplify(reducedAnz),1e-12)
+    return result_ham, result_anz
 
 
 def taperableQubits(reducedOplist):
@@ -323,8 +334,8 @@ def taperableQubits(reducedOplist):
             result.append(i)
     return result
 
-def reducedToTaperedOplist(reducedOplist):
-    taperableIndices = taperableQubits(reducedOplist)
+def reducedToTaperedOplist(reducedOplist, taper_oplist):
+    taperableIndices = taperableQubits(taper_oplist)
     result = []
     for term in reducedOplist:
         coeff = term[0]
@@ -334,10 +345,12 @@ def reducedToTaperedOplist(reducedOplist):
 
 
 
-def taperOplist(oplist,hfStateIndex,kernel=None,explicitEigvals=False):
-    reduced = reducedHamiltonian(oplist,hfStateIndex,kernel,explicitEigvals)
-    tapered = reducedToTaperedOplist(reduced)
-    return tapered
+def taperOplist(oplist,anzlist,hfStateIndex,kernel=None,explicitEigvals=False):
+    reduced_ham, reduced_anz = reducedHamiltonian(oplist,anzlist,hfStateIndex,kernel,explicitEigvals)
+    qubits_tapered = taperableQubits(reduced_ham)
+    tapered_ham = reducedToTaperedOplist(reduced_ham, reduced_ham)
+    tapered_anz = reducedToTaperedOplist(reduced_anz, reduced_ham)
+    return tapered_ham, tapered_anz, qubits_tapered
 
 
 '''
@@ -379,6 +392,25 @@ def readTaperingHamiltonian(filepath):
         oplist.append(opterm)
 
     return(oplist)
+
+
+def taper_dict(ham, anz):
+    ham_list = qonvert.dict_to_list_index(ham)
+    anz_list = qonvert.dict_to_list_index(anz)
+    num_qubits = len(ham_list[0][1])
+    hf_config = bit.int_to_bin(list(la.hf_state(range(int(num_qubits/2)), num_qubits).data).index(1), num_qubits)
+    
+    hf_index = hfDegenerateGroundState(ham_list)[1][-1]
+    tap_ham, tap_anz, qubits_tapered = taperOplist(ham_list, anz_list, hf_index)
+
+    new_ham = qonvert.index_list_to_dict(tap_ham)
+    new_anz = qonvert.index_list_to_dict(tap_anz)
+    new_num_qubits = len(list(new_ham.keys())[0])
+    new_hf_config = ''.join([hf_config[i] for i in range(num_qubits) if i not in qubits_tapered])
+
+    return new_ham, new_anz, new_num_qubits, new_hf_config
+
+
 TEST_OPLIST = [[(-0.8026507290573593+0j), (0, 0, 0, 0)],
                 [1.,[0,0,0,3]],
                [1.,[0,0,3,0]],
@@ -410,3 +442,4 @@ TEST_OPLIST_2 = [[(-0.8026507290573593+0j), (0, 0, 0, 0)],
                  [(-0.044917637245875136+0j), (1, 1, 2, 2)],
                  [(0.044917637245875136+0j), (1, 2, 2, 1)],
                  [(0.044917637245875136+0j), (2, 1, 1, 2)]]
+

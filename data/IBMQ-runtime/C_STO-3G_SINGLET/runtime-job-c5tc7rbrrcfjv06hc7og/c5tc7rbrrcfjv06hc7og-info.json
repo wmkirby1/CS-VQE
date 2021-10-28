@@ -1,0 +1,16 @@
+{
+  "id": "c5tc7rbrrcfjv06hc7og",
+  "hub": "ibm-q",
+  "group": "open",
+  "project": "main",
+  "backend": "ibmq_qasm_simulator",
+  "status": "Completed",
+  "params": [
+    "{\"ansatz\": {\"__type__\": \"QuantumCircuit\", \"__value__\": \"eJwL9Az29gxhZBBiZoAARgY+BgRgQWMzQtkRyZlFyaWZJboWhoYWZoZ5pTk5hYxgNYyFcIMYGJiAmBluACuSDDKIcE8sSS0EKyWohImwEkbCShgY2HEoCU5JJ2yOB0IJG1SICU2JM8IuYhUyQvxHWCETJKzYoC5Dd11QFDw8U6FC/mgeUfAtzdHwzCtJTU8t0tA11NRRCK7MTcrP0VAPiDaIVdfULICbxiKac7cv6ruzxLRJafU5M6o8QSpIcySVvM1AdKTgUhKMUEJE/ONOah4kKCHCwQzDMBUZoqWip99n/TrZ77B/eYHq0i3FN7aBVAzqVERUEYG7TBvWkWuEFrkbU7c2XLrl+3Jehompqp9sDEjFoI5c3Pk2mISsjTv2g0lIIESVRVSqixhpmiyM0ZLFr6jOz9t03EraXpc5L6h5dgykgjRH4lc41LLNaM06WrMyjNasozXraM1KwJTRmpWWNStVynkAag+e4g==\"}, \"operator\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.opflow.primitive_ops.pauli_sum_op\", \"__class__\": \"PauliSumOp\", \"__value__\": {\"primitive\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.sparse_pauli_op\", \"__class__\": \"SparsePauliOp\", \"__value__\": {\"data\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.pauli_table\", \"__class__\": \"PauliTable\", \"__value__\": {\"data\": {\"__type__\": \"ndarray\", \"__value__\": \"eJydU7tOw0AQ3Gn5iusMkptICCE+gI6IhoIKGWJEgQiyEQ3wFfwwSe52djbuuMK+187OzO3+ru9ubu9hn/bVbcb5aequSvf9uOr60j1vp49peHvYTptxv389vM7jbn9+Gd7H3fp0dX7Rl8uzvvyUf44TSwPQn8GQlqiztr3/tjWvt/uE4UXTA24cJgoDgQ9SQF7zD4/3WKeHTKeeizoEvQMMgm3CamH1fEmL8Q6HRI9xTA9xsQGgKVYZTpFuI8uq566qZna4xlfSZD0qK7vTQoGgCXEN9CpkQeW7h8FYHCE1fQF56+RJppXJhTyhmy9ILsiwmKg8JjBLcMk0IKwIO1gVHm4Bs6gWsY8y/Bk876LSpFhZ0KxSed2U9ig+/lRtSl8q1Rt8WS4CI43KxjrqhFxarNxgpvSj9Qx/sMYdzg==\"}}}, \"coeffs\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2xopq6joJ6WX1RSlJgXn1+UkgqScEvMKU4FihdnJBakAvkahiZmOpo6CrUK5AKuabPPc198Y3eAAQp65tXITuS4bg/jP9jSt/4SRxmcH9F8dWrn/gX7YfyKvWB5ON+kESwPV6832ebdivgLcHmPN7+LtBpPwPlpydoRprOOwNVnfbc5frTjIpzvceBIH7J5UsdEXiDb9woiD+dXHQHLw9Wf2s5Rvu31LTj/6eodidq6og4wPuPB2sfabxns4O5RbP369GgtXP27VtVlegl1Vgw4AFR+Fy55IOh6P6UCLt+uuOE0svlQ++Duh7pnH9w/a1fo91d1I9uPYt4Wyeev4t7OQbZfAlk91D64+cUqc/4onZgGV4/uf3T/oruPCP+juA8dfFOMkn+GZB66+csOP9v8Wyccbj96eKCbj64e3XwGhgZ35PBA99/O/yAgvgfG/wLm66PzbdDUw/lQgMo/IG6Jxt+Jph5uPo7w34XGR49/9PixZyASEAp/dPvQ+VD9cPvQ3c+Alv6g4Q/3D+tV7Z3I7geDA+o7cfH3my1beXbiJFT/IYXvBXB88O8hV56Q+RNszjX37U9GpCdBt+dq6RlwvgCv8uWY3w1wfsf598Gcf1rg/OZvCXN27yqCm1/ykkv8lko5nN9KQL4cIg83LwNNvgdNfwVEHq5eEOI+uHwvmvsOoPnPAeI/uPrCYzeOneGcBee/tbh7PlJoKs7ywNJH2edAZzPO8hJdvriQ7SbQfLh569DMh9qH0z2EzMfBh6fHdWjmo7sHah9O/6KHB7r56IBTZvUWZPfjcA+6/3Hajx4eRPoX3b1w9VD3ofuf6PIFXT96/JHqPkLhi24eenyixx8h+9HjBwCXZhYt\"}}}, \"coeff\": 1.0, \"grouping_type\": \"None\"}}, \"optimizer\": {\"name\": \"QN-SPSA\", \"maxiter\": 150, \"resamplings\": {\"15\": 150}}, \"initial_parameters\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2ahrqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RomOpo6CrUKFAAuBgIAAMDMG18=\"}, \"measurement_error_mitigation\": true}"
+  ],
+  "program": {
+    "id": "vqe"
+  },
+  "created": "2021-10-28T15:38:21.480062Z",
+  "runtime": "qiskit-program:a059b14"
+}
