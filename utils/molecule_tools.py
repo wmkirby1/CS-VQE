@@ -5,7 +5,6 @@ import utils.qonversion_tools as qonvert
 import utils.bit_tools as bit
 import utils.linalg_tools as la
 import itertools
-from fermions.yaferp.misc import tapering
 # OpenFermion libraries
 import openfermion
 from openfermion import MolecularData

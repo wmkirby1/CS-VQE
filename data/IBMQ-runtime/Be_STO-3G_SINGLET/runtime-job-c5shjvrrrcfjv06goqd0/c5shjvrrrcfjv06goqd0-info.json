@@ -1,0 +1,16 @@
+{
+  "id": "c5shjvrrrcfjv06goqd0",
+  "hub": "ibm-q",
+  "group": "open",
+  "project": "main",
+  "backend": "ibmq_belem",
+  "status": "Completed",
+  "params": [
+    "{\"ansatz\": {\"__type__\": \"QuantumCircuit\", \"__value__\": \"eJwL9Az29gxhZBBiZoAARgYeBgRgRmKzgGUhoCs5syi5NLNE18TQwiyvNCenkBGsmrEQbgwDAxNcKyuSKDKIcE8sSS0EKyWohIGBHYeS4JR0wuZ4IJQQYQ5uJ3uQoISRgQ0qxISmxBnhLWIVMkIczwa1EN3SoCi4B1OhQv5o7lPwLc3R8MwrSU1PLdLQNdTUUQiuzE3Kz9FQD4g2iFXX1CyAm8aiIl+0aGWa/8GFnd2qMteffAKpIM2RRHmbiNjCpSSYpDgfMhFhiBYRvSoZE+z/+25bv1Xpx90fRStBKgYiIohQgjtHBJOUr4ZMXBmhxdX6iJnrj2s6LthzTuDAi0TJJJCKgck01Coqh0xUGKNFRfHTeRGFuk4398uybbp+qywepGLoll9E1X1EZWJq1X1DJmGYoCWM54ZnS1NXOpUuOPb7RWDgZDeQisFVngbTvcglIgUS5ZYhkyhM0RIFv3/MvIi/zjzL8m+yNqz7JwRSMVpw0yUqzNCiwmTBibRHpzx9+vzSwpZ3zy0DqRiIqCCqyB1eReVoH2CQRMRoH2DoxNVoH4BhsETFaB9gtA8w2gfAZspoH2C0D4DHTQMdFYO1D0CdgpuYbAMAfPeY4g==\"}, \"operator\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.opflow.primitive_ops.pauli_sum_op\", \"__class__\": \"PauliSumOp\", \"__value__\": {\"primitive\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.sparse_pauli_op\", \"__class__\": \"SparsePauliOp\", \"__value__\": {\"data\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.pauli_table\", \"__class__\": \"PauliTable\", \"__value__\": {\"data\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBek2SorqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RqmRjoKZpo6CrUK5AIuBhhgBEIgycgI4YDZDMgUXBjKBIkzMkJJiDpGmGq4FkawEka4QqgSCIIaDpaFkhDjGZENgMszQFUhnAC1Gm4DVDEEwaQZGZHE4A5G1QeTgToEYQkj3LcIOTALAJjJHF0=\"}}}, \"coeffs\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2xopq6joJ6WX1RSlJgXn1+UkgqScEvMKU4FihdnJBakAvkapkY6mjoKtQpkA67mH1ktmr80DjBAwe+V1xtUy1/vh/G/ofHz2I2mLZwx3R7G/wGRh/P9WMDycPWbWFH5d1K+npLrfwLnL7TomDbPpgmuX0yuP9L/VgOcH7DbYk9n5x5rGH/H68UOcnPY9qDJ70aTt0EzH24f1Hx0+9HlCdlvg8ZHd481LvPQ/XtB+oLXlSsdcPs//AcBcbj5EPBqB4z1GSz/fzex8oTM913CxyRruQwuHz+7KHnKis+2aPL2aPJ7YfwEXf+3blrz9pPLl9Nn8rEOWgA3f8rG1r6sBnO4+06rHvp0cbupDQH5PWjmoZu/H03/HjT96ObjlEc3DwD2lOyh\"}}}, \"coeff\": 1.0, \"grouping_type\": \"None\"}}, \"optimizer\": {\"name\": \"QN-SPSA\", \"maxiter\": 250, \"resamplings\": {\"10\": 100}}, \"initial_parameters\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2ahrqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RrmOpo6CrUKFAAuBjIBAFNSG2I=\"}, \"measurement_error_mitigation\": true, \"job_id\": \"B+ibmq_belem\"}"
+  ],
+  "program": {
+    "id": "vqe"
+  },
+  "created": "2021-10-27T09:21:03.4387Z",
+  "runtime": "qiskit-program:a059b14"
+}

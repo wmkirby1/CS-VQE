@@ -1,0 +1,16 @@
+{
+  "id": "c5sg5t2kh8krlc7emkg0",
+  "hub": "ibm-q",
+  "group": "open",
+  "project": "main",
+  "backend": "ibmq_qasm_simulator",
+  "status": "Completed",
+  "params": [
+    "{\"ansatz\": {\"__type__\": \"QuantumCircuit\", \"__value__\": \"eJwL9Az29gxhZBBiZoAARgYeBgRgRmKzgGUhwD45syi5NLNE19Dc0jyvNCenkBGsmrEQbgwDAxNcKyuSKDKIcE8sSYVoYcehJDglHaaICac5HiQoYSSshIGBDSrEhKbEGeFiiFmEFTJC3MUGtRDd0qAouNtToUL+aO5T8C3N0fDMK0lNTy3S0DXU1FEIrsxNys/RUA+INohV19QsgJvG8pJ9isfv9V4nW3/fEbz/Z9pPkArSHEmUt4kIZSIilChzhkxUGKJFRX3HX++2F27HZtgzxefZGD0FqRiYqMClJJh2EYE/fBnJCV8jtPCNTxSz61nmwjLHxKh5yZ06M5CKoZ+CaRBwxmgBt3WDw1J7HofA/sqFPMHKe7VBKoZ6esOvcLQMRgWjZTDRjiTK2xS0S4IJKxktyfE6crDmg9GSHGobANTHT0s=\"}, \"operator\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.opflow.primitive_ops.pauli_sum_op\", \"__class__\": \"PauliSumOp\", \"__value__\": {\"primitive\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.sparse_pauli_op\", \"__class__\": \"SparsePauliOp\", \"__value__\": {\"data\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.pauli_table\", \"__class__\": \"PauliTable\", \"__value__\": {\"data\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBek2SorqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RrGJjoKZpo6CrUK5AIuBgRgBBOM6EwwxcjACBeGMxlBcoxgEkoxwgCMD9MOVQJXBkYMDOhKIJYyMsCUM8AQzAqoFrgrGJFcygAAtUEcIA==\"}}}, \"coeffs\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2xopq6joJ6WX1RSlJgXn1+UkgqScEvMKU4FihdnJBakAvkaxiY6mjoKtQpkA67DUtz1aYfMDjBAgUSkyjlDoyf7YfxvEaj8fZOCPQTtH9jD+I0HPNicZ5vYwfjPWpw35HXeg8v/QeNbbKoOk8q7Ajdv3pLl/ocMJ9ij8eHyKY9tX+/dtwbO5/Zlu+WyxmAPjH/BfmN05FtJGxj/THpn7p2s0v1o8ntwyeMw3wZNHu6+oN2/c9qemsPlXZxuL+A9x4jTfHT16OZB1cP5zhDz4OqBNqx2nW2yjwEZ+DRa4uY7oKjf5VwbwbD1ny2S/C2Z3O27cPHR1QMA1nKarA==\"}}}, \"coeff\": 1.0, \"grouping_type\": \"None\"}}, \"optimizer\": {\"name\": \"QN-SPSA\", \"maxiter\": 250, \"resamplings\": {\"25\": 250}}, \"initial_parameters\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2ahrqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RomOpo6CrUKFAAuBgIAAMDMG18=\"}, \"measurement_error_mitigation\": true}"
+  ],
+  "program": {
+    "id": "vqe"
+  },
+  "created": "2021-10-27T07:42:44.730959Z",
+  "runtime": "qiskit-program:a059b14"
+}
