@@ -1,5 +1,5 @@
 from numpy.lib.npyio import _save_dispatcher
-from cs_vqe.cs_vqe_model import cs_vqe
+from cs_vqe.model import cs_vqe
 import utils.bit_tools as bit
 import utils.cs_vqe_tools_original as c_tools
 import utils.circuit_tools as circ
@@ -178,8 +178,8 @@ class cs_vqe_circuit():
 
         # +1-eigenstate parameters
         self.init_state = cs.init_state()
-        eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
-        self.index_paulis = eig.P_index(q_pos=True)
+        #eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
+        #self.index_paulis = eig.P_index(q_pos=True)
         #if not rot_A:
         #    #self.t1, self.t2 = eig.t_val(alt=True)
         #    self.r1, self.r2 = self.A.values()
@@ -203,13 +203,13 @@ class cs_vqe_circuit():
         return sim_qubits, sim_indices
 
 
-    def reduced_parity_bits(self, num_sim_q):
-        """ For +1-eigenspace of A restriction, stores the qubit 
-            positions of Z operators in each term for parity calculation
-        """
-        IZ1_red = [q for q in self.index_paulis['Z1'] if q in self.sim_qubits(num_sim_q)[0]]
-        IZ2_red = [q for q in self.index_paulis['Z2'] if q in self.sim_qubits(num_sim_q)[0]]
-        return IZ1_red, IZ2_red
+    #def reduced_parity_bits(self, num_sim_q):
+    #    """ For +1-eigenspace of A restriction, stores the qubit 
+    #        positions of Z operators in each term for parity calculation
+    #    """
+    #    IZ1_red = [q for q in self.index_paulis['Z1'] if q in self.sim_qubits(num_sim_q)[0]]
+    #    IZ2_red = [q for q in self.index_paulis['Z2'] if q in self.sim_qubits(num_sim_q)[0]]
+    #    return IZ1_red, IZ2_red
 
 
     def lost_parity(self, Z_qubits, num_sim_q):
