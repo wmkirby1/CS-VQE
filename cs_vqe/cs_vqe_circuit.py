@@ -1,6 +1,5 @@
 from numpy.lib.npyio import _save_dispatcher
-from cs_vqe_classes.cs_vqe import cs_vqe
-from cs_vqe_classes.eigenstate import eigenstate
+from cs_vqe.cs_vqe_model import cs_vqe
 import utils.bit_tools as bit
 import utils.cs_vqe_tools_original as c_tools
 import utils.circuit_tools as circ
@@ -9,7 +8,9 @@ import utils.linalg_tools as la
 from copy import deepcopy
 import numpy as np
 import itertools
+import matplotlib.pyplot as plt
 
+from openfermion.linalg import get_ground_state, jw_configuration_state
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
@@ -17,11 +18,6 @@ from qiskit.utils import QuantumInstance
 from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS_B, P_BFGS,
                                                 NELDER_MEAD, CG, ADAM, POWELL, TNC, GSLS,
                                                 NFT, IMFIL, BOBYQA, SNOBFIT)
-from openfermion.linalg import get_ground_state, jw_configuration_state
-
-import numpy as np
-import matplotlib.pyplot as plt
-
 from qiskit import Aer
 from qiskit.utils import QuantumInstance, algorithm_globals
 from qiskit.algorithms import VQE, NumPyMinimumEigensolver
