@@ -10,6 +10,7 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 
+#from qat.interop.qiskit import qiskit_to_qlm
 from openfermion.linalg import get_ground_state, jw_configuration_state
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.quantumcircuit import QuantumCircuit
@@ -731,6 +732,28 @@ class cs_vqe_circuit():
         return qc
 
 
+    def qlm_circuit(self, anz_terms, num_sim_q):
+        """Method for generating gate intructions to build CS-VQE circuit on Atos QLM
+        """
+        qc = self.build_circuit(anz_terms, num_sim_q)
+        
+        instructions=[]
+        param_num=0
+        for gate, q_pos, blank in qc.data:
+            var = gate.params
+            if var != []:
+                var = [param_num%qc.num_parameters]
+                param_num += 1
+            instructions.append((gate.name.upper(), var, [q.index for q in q_pos]))
+
+        qc_qlm_dict = { 'hamiltonian': self.ham_reduced[num_sim_q],
+                        'num_qubits':  num_sim_q,
+                        'num_params':  qc.num_parameters,
+                        'instructions':instructions}
+
+        return qc_qlm_dict
+
+
     def init_params(self, anz_terms, num_sim_q):
         """ Returns the initial parameters for input into classical optimiser
         """
@@ -904,7 +927,7 @@ class cs_vqe_circuit():
                     else:
                         cs_vqe_results = self.CS_VQE(anz_terms=anz, 
                                                      num_sim_q=num_sim_q, 
-                                                     optimizer=IMFIL(maxiter=500), 
+                                                     optimizer=IMFIL(maxiter=10000), 
                                                      param_bound=np.pi,
                                                      noise=False)
                         op_error = cs_vqe_results['result']-cs_vqe_results['truegs']
