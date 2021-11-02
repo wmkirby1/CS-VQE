@@ -1,1 +1,0 @@
-from yaferp.analysis.analyser import loadOpl
