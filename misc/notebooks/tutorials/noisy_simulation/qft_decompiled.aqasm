@@ -1,0 +1,7 @@
+DEFINE PARAM QFT int : None
+BEGIN
+qubits 5
+cbits 5
+
+QFT[5] q[0],q[1],q[2],q[3],q[4]
+END

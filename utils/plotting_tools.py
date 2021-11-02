@@ -2,9 +2,7 @@ import math
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-import cs_vqe_classes.cs_vqe_circuit as cs_circ
 from statistics import median
-from copy import deepcopy
 
 plt.style.use('ggplot')
 
