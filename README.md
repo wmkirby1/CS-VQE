@@ -1,10 +1,11 @@
-# ContextualSubspaceVQE
+# CS-VQE Ansatz Builder
 
-ContextualSubspaceVQE provides a classical simulation implementation of the hybrid quantum-classical algorithm called *contextual subspace variational quantum eigensolver* (CS-VQE), as described in [https://arxiv.org/abs/2011.10027](https://arxiv.org/abs/2011.10027).
+Based on the foundational CS-VQE work of [https://arxiv.org/abs/2011.10027](https://arxiv.org/abs/2011.10027), making use of the original code found at [https://github.com/wmkirby1/ContextualSubspaceVQE](https://github.com/wmkirby1/ContextualSubspaceVQE).
+
 
 ## What is included
 
-- Test for contextuality of a Hamiltonian.
+- All of the original CS-VQE functionality of [https://github.com/wmkirby1/ContextualSubspaceVQE](ContextualSubspaceVQE)
 - Construction of quasi-quantized (classical) models for noncontextual Hamiltonians.
 - Heuristics to approximate optimal noncontextual sub-Hamiltonians given arbitrary target Hamiltonians.
 - Classical simulation of quantum correction to a noncontextual approximation.
