@@ -1,6 +1,6 @@
 import utils.qonversion_tools as qonvert
 import utils.bit_tools as bit
-import cs_vqe.circuit as cs_circ
+#import cs_vqe.circuit as cs_circ
 #from openfermion.ops import QubitOperator
 #from openfermion.linalg import LinearQubitOperator, get_sparse_operator, get_ground_state
 import numpy as np

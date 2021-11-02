@@ -7,7 +7,7 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 
-class cs_vqe:
+class cs_vqe_model:
     """Class for constructing instances of CS-VQE Hamiltonians
 
     Attributes

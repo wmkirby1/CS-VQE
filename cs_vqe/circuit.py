@@ -1,5 +1,5 @@
 from numpy.lib.npyio import _save_dispatcher
-from cs_vqe.model import cs_vqe
+from cs_vqe.model import cs_vqe_model
 import utils.bit_tools as bit
 import utils.cs_vqe_tools_original as c_tools
 import utils.circuit_tools as circ
@@ -15,16 +15,15 @@ from openfermion.linalg import get_ground_state, jw_configuration_state
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
-from qiskit.utils import QuantumInstance
+from qiskit.aqua import QuantumInstance
+#from qiskit.utils import QuantumInstance, algorithm_globals
 from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS_B, P_BFGS,
                                                 NELDER_MEAD, CG, ADAM, POWELL, TNC, GSLS,
-                                                NFT, IMFIL, BOBYQA, SNOBFIT)
+                                                NFT)#, IMFIL, BOBYQA, SNOBFIT)
 from qiskit import Aer
-from qiskit.utils import QuantumInstance, algorithm_globals
-from qiskit.algorithms import VQE, NumPyMinimumEigensolver
-from qiskit.algorithms.optimizers import SPSA
+from qiskit.aqua.algorithms import VQE, NumPyMinimumEigensolver
 from qiskit.circuit.library import TwoLocal
-from qiskit.opflow import I, X, Z
+#from qiskit.opflow import I, X, Z
 import os
 from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
@@ -142,7 +141,7 @@ class cs_vqe_circuit():
         #self.rot_A = rot_A
 
         # epistricted model and reduced Hamiltonian
-        cs = cs_vqe(hamiltonian, terms_noncon, num_qubits)#, rot_G, rot_A)
+        cs = cs_vqe_model(hamiltonian, terms_noncon, num_qubits)#, rot_G, rot_A)
         self.ham_rotations = cs.rotations()
         generators = cs.generators()
 
@@ -780,7 +779,7 @@ class cs_vqe_circuit():
         self.errors.append(std)
 
 
-    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, check_A=False, noise=False, show_amps=False):
+    def CS_VQE(self, anz_terms=None, num_sim_q=None, ham=None, optimizer=POWELL(maxiter=10000), param_bound=np.pi, check_A=False, show_amps=False):
         """ Runs CS-VQE for a given Ansatz operator and number of qubits to simulate
         """
         self.counts.clear()
@@ -809,26 +808,9 @@ class cs_vqe_circuit():
         qc.parameter_bounds = bounds
 
         seed = 42
-        algorithm_globals.random_seed = seed
-        if not noise:
-            backend = Aer.get_backend('statevector_simulator')
-            qi = QuantumInstance(backend=backend, seed_simulator=seed, seed_transpiler=seed)
+        backend = Aer.get_backend('statevector_simulator')
+        qi = QuantumInstance(backend=backend, seed_simulator=seed, seed_transpiler=seed)
 
-        else:
-            device_backend = FakeVigo()
-            noise_model = None
-            backend = Aer.get_backend('qasm_simulator')
-            os.environ['QISKIT_IN_PARALLEL'] = 'TRUE'
-            device = QasmSimulator.from_backend(device_backend)
-            coupling_map = device.configuration().coupling_map
-            noise_model = NoiseModel.from_backend(device)
-            basis_gates = noise_model.basis_gates
-            qi = QuantumInstance(backend=backend, 
-                                seed_simulator=seed, 
-                                seed_transpiler=seed,
-                                coupling_map=coupling_map, 
-                                noise_model=noise_model)
-        
         # print status update
         sim_qubits = self.sim_qubits(num_sim_q)[0]
         ancilla_string = ''
@@ -927,9 +909,8 @@ class cs_vqe_circuit():
                     else:
                         cs_vqe_results = self.CS_VQE(anz_terms=anz, 
                                                      num_sim_q=num_sim_q, 
-                                                     optimizer=IMFIL(maxiter=10000), 
-                                                     param_bound=np.pi,
-                                                     noise=False)
+                                                     optimizer=POWELL(maxiter=10000), 
+                                                     param_bound=np.pi)
                         op_error = cs_vqe_results['result']-cs_vqe_results['truegs']
                         anz_list.append((op, op_error))
             add_op, error = sorted(anz_list, key=lambda x:x[1])[0]
@@ -943,7 +924,7 @@ class cs_vqe_circuit():
         return anz_ops
 
 
-    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=IMFIL(maxiter=10000), param_bound=np.pi, iters=1, check_A=False, noise=False):
+    def run_cs_vqe(self, anz_terms=None, max_sim_q=None, min_sim_q=0, optimizer=POWELL(maxiter=10000), param_bound=np.pi, iters=1, check_A=False):
         """ Runs multiple CS-VQE routine up to and including the maximum specified number of qubits
         """
         if max_sim_q is None:
@@ -970,7 +951,7 @@ class cs_vqe_circuit():
             num_sim_q = index+1+min_sim_q
             vqe_iters=[]
             for i in range(iters):
-                vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer,param_bound=param_bound, check_A=check_A, noise=noise)
+                vqe_run = self.CS_VQE(anz_terms, num_sim_q, optimizer=optimizer,param_bound=param_bound, check_A=check_A)
                 vqe_iters.append(vqe_run)
                 print('**  Contextual target:', round(vqe_run['target'], 15), '| VQE result:', round(vqe_run['result'], 15))
                 error = vqe_run['result']-vqe_run['target']

@@ -1,0 +1,158 @@
+apiVersion: io.orquestra.workflow/1.0.0
+name: cs-vqe-test
+
+imports:
+- name: z-quantum-core
+  type: git
+  parameters:
+    repository: "https://github.com/TimWeaving/z-quantum-core.git"
+    branch: "master"
+- name: qe-qiskit
+  type: git
+  parameters:
+    repository: "https://github.com/TimWeaving/qe-qiskit.git"
+    branch: "master"
+- name: cs-vqe-component
+  type: git
+  parameters:
+    repository: "https://github.com/TimWeaving/CS-VQE.git"
+    branch: "dev"
+- name: qe-forest
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/qe-forest.git"
+    branch: "master"
+- name: z-quantum-optimizers
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-optimizers.git"
+    branch: "master"
+- name: z-quantum-vqe
+  type: git
+  parameters:
+    repository: "git@github.com:zapatacomputing/z-quantum-vqe.git"
+    branch: "master"
+
+steps:
+#- name: get-ham-data
+#  config:
+#    runtime:
+#      language: python3
+#      imports: [cs-vqe-component]
+#      parameters:
+#        file: cs-vqe-component/utils/orquestra/get_ham_data.py
+#        function: get_ham_data
+#  inputs:
+#    - speciesname: 'H3+_STO-3G_SINGLET'
+#      type: string
+#  outputs:
+#  - name: speciesname
+#    type: string
+#  - name: ham
+#    type: dict
+#  - name: uccsd
+#    type: dict
+#  - name: num_qubits
+#    type: int
+
+- name: extract-noncon
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, cs-vqe-component]
+      parameters:
+        file: cs-vqe-component/utils/orquestra/extract_noncon.py
+        function: extract_noncon
+  inputs:
+    - ham: {"IIIIII": -0.3072011371340725, "ZIIIII": 0.2132840286163142, "IZIIII": 0.21328402861631418, "IIZIII": -0.11363228842158378, "IIIZII": -0.11363228842158381, "IIIIZI": -0.11363254995095788, "IIIIIZ": -0.11363254995095788, "ZZIIII": 0.14671371888181678, "YXXYII": 0.036006913080308685, "YYXXII": -0.036006913080308685, "XXYYII": -0.036006913080308685, "XYYXII": 0.036006913080308685, "YXIIXY": 0.036006913866771746, "YYIIXX": -0.036006913866771746, "XXIIYY": -0.036006913866771746, "XYIIYX": 0.036006913866771746, "ZIZIII": 0.10666963571099214, "ZIIZII": 0.14267654879130082, "YZYZII": -0.02382124592510556, "XZXZII": -0.02382124592510556, "YZZXXY": -0.023821238064299408, "YZZYXX": 0.023821238064299408, "XZZXYY": 0.023821238064299408, "XZZYYX": -0.023821238064299408, "ZIIIZI": 0.10666965888151225, "ZIIIIZ": 0.142676572748284, "YZYIIZ": 0.023821256453232607, "XZXIIZ": 0.023821256453232607, "IZZIII": 0.14267654879130082, "IYIYII": -0.02382124592510556, "IXIXII": -0.02382124592510556, "IYXIXY": 0.023821238064299408, "IYYIYY": 0.023821238064299408, "IXXIXX": 0.023821238064299408, "IXYIYX": 0.023821238064299408, "IZIZII": 0.10666963571099214, "IZIIZI": 0.142676572748284, "IYZYZI": 0.023821256453232607, "IXZXZI": 0.023821256453232607, "IZIIIZ": 0.10666965888151225, "IIZZII": 0.1636188593762816, "IIYXXY": 0.018908492435760014, "IIYYXX": -0.018908492435760014, "IIXXYY": -0.018908492435760014, "IIXYYX": 0.018908492435760014, "IIZIZI": 0.10689334239427412, "IIZIIZ": 0.12580183483003413, "YZYIII": -1.4458530135305625e-08, "XZXIII": -1.4458530135305625e-08, "IIIZZI": 0.12580183483003413, "IIIZIZ": 0.10689334239427412, "IIIIZZ": 0.16361886988259655}
+      type: dict
+  outputs:
+  - name: terms_noncon
+    type: list
+
+- name: ansatz-circuit
+  passed: [extract-noncon]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, qe-qiskit, cs-vqe-component]
+      parameters:
+        file: cs-vqe-component/utils/orquestra/ansatz_circuit.py
+        function: ansatz_circuit
+  inputs:
+    - ham: {"IIIIII": -0.3072011371340725, "ZIIIII": 0.2132840286163142, "IZIIII": 0.21328402861631418, "IIZIII": -0.11363228842158378, "IIIZII": -0.11363228842158381, "IIIIZI": -0.11363254995095788, "IIIIIZ": -0.11363254995095788, "ZZIIII": 0.14671371888181678, "YXXYII": 0.036006913080308685, "YYXXII": -0.036006913080308685, "XXYYII": -0.036006913080308685, "XYYXII": 0.036006913080308685, "YXIIXY": 0.036006913866771746, "YYIIXX": -0.036006913866771746, "XXIIYY": -0.036006913866771746, "XYIIYX": 0.036006913866771746, "ZIZIII": 0.10666963571099214, "ZIIZII": 0.14267654879130082, "YZYZII": -0.02382124592510556, "XZXZII": -0.02382124592510556, "YZZXXY": -0.023821238064299408, "YZZYXX": 0.023821238064299408, "XZZXYY": 0.023821238064299408, "XZZYYX": -0.023821238064299408, "ZIIIZI": 0.10666965888151225, "ZIIIIZ": 0.142676572748284, "YZYIIZ": 0.023821256453232607, "XZXIIZ": 0.023821256453232607, "IZZIII": 0.14267654879130082, "IYIYII": -0.02382124592510556, "IXIXII": -0.02382124592510556, "IYXIXY": 0.023821238064299408, "IYYIYY": 0.023821238064299408, "IXXIXX": 0.023821238064299408, "IXYIYX": 0.023821238064299408, "IZIZII": 0.10666963571099214, "IZIIZI": 0.142676572748284, "IYZYZI": 0.023821256453232607, "IXZXZI": 0.023821256453232607, "IZIIIZ": 0.10666965888151225, "IIZZII": 0.1636188593762816, "IIYXXY": 0.018908492435760014, "IIYYXX": -0.018908492435760014, "IIXXYY": -0.018908492435760014, "IIXYYX": 0.018908492435760014, "IIZIZI": 0.10689334239427412, "IIZIIZ": 0.12580183483003413, "YZYIII": -1.4458530135305625e-08, "XZXIII": -1.4458530135305625e-08, "IIIZZI": 0.12580183483003413, "IIIZIZ": 0.10689334239427412, "IIIIZZ": 0.16361886988259655}
+      type: dict
+    - terms_noncon: ((extract-noncon.terms_noncon))
+      type: list
+    - anz_op: {"YYYXII": -0.012181243403146016, "YXYYII": 0.012181243403146016, "XXYXII": 0.012181243403146016, "XYYYII": 0.012181243403146016, "YXXXII": -0.012181243403146016, "YYXYII": -0.012181243403146016, "XYXXII": -0.012181243403146016, "XXXYII": 0.012181243403146016, "YYIIYX": -0.012181235170586887, "YXIIYY": 0.012181235170586887, "XXIIYX": 0.012181235170586887, "XYIIYY": 0.012181235170586887, "YXIIXX": -0.012181235170586887, "YYIIXY": -0.012181235170586887, "XYIIXX": -0.012181235170586887, "XXIIXY": 0.012181235170586887}
+      type: dict
+    - num_qubits: 6
+      type: int
+    - num_sim_q: 4
+      type: int
+  outputs:
+  - name: ham_red
+    type: qubit-operator
+  - name: ansatz_circuit
+    type: circuit
+  - name: init_params
+    type: ansatz-params
+
+- name: optimize-circuit
+  passed: [ansatz-circuit]
+  config:
+    runtime:
+      language: python3
+      imports: [z-quantum-core, z-quantum-optimizers, qe-forest, z-quantum-vqe, cs-vqe-component]
+      parameters:
+        file: cs-vqe-component/utils/orquestra/optimize.py
+        function: optimize_parametrized_circuit_for_ground_state_of_operator
+    #resources:
+    #  cpu: "1000m"
+    #  memory: "1Gi"
+    #  disk: "10Gi"
+  inputs:
+    - target_operator: ((ansatz-circuit.ham_red))
+      type: qubit-operator
+    - parametrized_circuit: ((ansatz-circuit.ansatz_circuit))
+      type: circuit
+    - initial_parameters: ((ansatz-circuit.init_params))
+      type: ansatz-params
+    - backend_specs:
+        module_name: qeforest.simulator
+        function_name: ForestSimulator
+        device_name: wavefunction-simulator
+      type: specs
+    - optimizer_specs:
+        module_name: zquantum.optimizers.scipy_optimizer
+        function_name: ScipyOptimizer
+        method: Powell
+      type: specs
+    #- estimation_method_specs:
+    #    module_name: zquantum.core.estimation
+    #    function_name: estimate_expectation_values_by_averaging
+    #  type: specs
+    - estimation_preprocessors_specs:
+      - module_name: zquantum.core.estimation 
+        function_name: group_greedily
+      - module_name: zquantum.core.estimation 
+        function_name: perform_context_selection
+      - module_name: zquantum.core.estimation 
+        function_name: allocate_shots_uniformly
+        number_of_shots: 10000
+      type: specs  
+  outputs:
+    - name: optimization-results
+      type: opt-results
+    - name: optimized-parameters
+      type: ansatz-params
+
+types:
+ - data_type
+ - dict
+ - list
+ - circuit
+ - opt-results
+ - ansatz-params
+ - qubit-operator
+ - specs
