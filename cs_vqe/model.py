@@ -267,14 +267,7 @@ class cs_vqe_model:
         list
             (true gs energy, true gs eigenvector)
         """
-        if not rot_override:
-            #ham_q = qonvert.dict_to_QubitOperator(self.get_ham())
-            ham_mat = qonvert.dict_to_WeightedPauliOperator(self.get_ham()).to_matrix()
-
-        else:
-            #ham_q = qonvert.dict_to_QubitOperator(self.ham)
-            ham_mat = qonvert.dict_to_WeightedPauliOperator(self.ham).to_matrix()
-            
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(self.ham).to_matrix()
         gs = la.get_ground_state(ham_mat)
 
         return gs

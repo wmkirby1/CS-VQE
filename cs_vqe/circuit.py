@@ -1,3 +1,4 @@
+import os
 from numpy.lib.npyio import _save_dispatcher
 from cs_vqe.model import cs_vqe_model
 import utils.bit_tools as bit
@@ -24,7 +25,6 @@ from qiskit import Aer
 from qiskit.aqua.algorithms import VQE, NumPyMinimumEigensolver
 from qiskit.circuit.library import TwoLocal
 #from qiskit.opflow import I, X, Z
-import os
 from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.test.mock import FakeVigo
@@ -125,65 +125,70 @@ class cs_vqe_circuit():
     red_anz_drop = False
     init_param = np.array([])
     
-    def __init__(self, hamiltonian, terms_noncon, num_qubits, hf_config, order=None):#, rot_G=True, rot_A=True):
-        #occ_orb = list(set(range(num_qubits))-set(range(int(num_qubits/2))))
-        #for index, i in enumerate(la.hf_state(range(int(num_qubits/2)), num_qubits)):
-        #    if i == 1:
-        #        self.HF_config = bit.int_to_bin(index, num_qubits)
-        if not c_tools.contextualQ_ham(deepcopy(hamiltonian)):
-            raise Exception('Hamiltonian is not contextual')
-        
-        self.HF_config = hf_config
-        
-        self.hamiltonian = hamiltonian
-        self.num_qubits = num_qubits
-        #self.rot_G = rot_G
-        #self.rot_A = rot_A
+    def __init__(self, model_data=None, hamiltonian=None, terms_noncon=None, num_qubits=None, hf_config=None, order=None):
 
-        # epistricted model and reduced Hamiltonian
-        cs = cs_vqe_model(hamiltonian, terms_noncon, num_qubits)#, rot_G, rot_A)
-        self.ham_rotations = cs.rotations()
-        generators = cs.generators()
+        if model_data is not None:
+            self.hamiltonian    = model_data["ham"]
+            self.uccsd          = model_data["uccsd"]
+            self.num_qubits     = model_data["num_qubits"]
+            self.HF_config      = model_data["hf_config"]
+            self.terms_noncon   = model_data["terms_noncon"]
+            self.num_tapered    = model_data["num_tapered"]
+            self.true_gs_nrg    = model_data["true_gs_nrg"]
+            self.true_gs_vec    = model_data["true_gs_vec"]
+            self.ham_rotations  = model_data["ham_rotations"]
+            self.noncon         = model_data["noncon"]
+            self.truegs         = model_data["truegs"]
+            self.G              = model_data["G"]
+            self.A              = model_data["A"]
+            self.X_index        = model_data["X_index"]
+            self.X_qubit        = model_data["X_qubit"]
+            self.cs_vqe_energy  = model_data["cs_vqe_energy"]
+            self.cs_vqe_errors  = model_data["cs_vqe_errors"]
+            self.chem_acc_num_q = model_data["chem_acc_num_q"]
+            self.order          = model_data["order"]
+            self.ham_reduced    = model_data["ham_reduced"]
+            self.init_state     = model_data["reference_state"]
 
-        # defined here so only executed once instead of at each call
-        self.noncon = cs.gs_noncon_energy()
-        self.truegs = cs.true_gs()[0]
-        self.G = generators[0]
-        self.A = generators[1] 
+        else:
+            if not c_tools.contextualQ_ham(deepcopy(hamiltonian)):
+                raise Exception('Hamiltonian is not contextual')
+            
+            self.HF_config = hf_config
+            
+            self.hamiltonian = hamiltonian
+            self.num_qubits = num_qubits
 
-        #if rot_A:
-        self.X_index = list(self.A.keys())[0].find('Z')
-        #else:
-        #    for p in self.A.keys():
-        #        if 'X' in list(p):
-        #            self.X_index = p.index('X')
-        self.X_qubit = num_qubits-1-self.X_index
+            # epistricted model and reduced Hamiltonian
+            cs = cs_vqe_model(hamiltonian, terms_noncon, num_qubits)#, rot_G, rot_A)
+            self.ham_rotations = cs.rotations()
+            generators = cs.generators()
 
-        ham_noncon = {}
-        for t in terms_noncon:
-            ham_noncon[t] = hamiltonian[t]
+            # defined here so only executed once instead of at each call
+            self.noncon = cs.gs_noncon_energy()
+            self.truegs = cs.true_gs()[0]
+            self.G = generators[0]
+            self.A = generators[1] 
 
-        if order is None:
-            heuristic = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.truegs)
-            self.cs_vqe_energy = heuristic[1]
-            self.cs_vqe_errors = heuristic[2]
-            for num_q, e in enumerate(heuristic[2]):
-                if e <= 0.0016:
-                    self.chem_acc_num_q = num_q
-                    break
-            order = heuristic[3]
+            self.X_index = list(self.A.keys())[0].find('Z')
+            self.X_qubit = num_qubits-1-self.X_index
 
-        self.order, self.ham_reduced = cs.reduced_hamiltonian(order)
-        #self.order=order
+            ham_noncon = {}
+            for t in terms_noncon:
+                ham_noncon[t] = hamiltonian[t]
 
-        # +1-eigenstate parameters
-        self.init_state = cs.init_state()
-        #eig = eigenstate(self.A, bit.bin_to_int(self.init_state), num_qubits)
-        #self.index_paulis = eig.P_index(q_pos=True)
-        #if not rot_A:
-        #    #self.t1, self.t2 = eig.t_val(alt=True)
-        #    self.r1, self.r2 = self.A.values()
-        #    self.A1, self.A2 = self.A.keys()
+            if order is None:
+                heuristic = c_tools.csvqe_approximations_heuristic(hamiltonian, ham_noncon, num_qubits, self.truegs)
+                self.cs_vqe_energy = heuristic[1]
+                self.cs_vqe_errors = heuristic[2]
+                for num_q, e in enumerate(heuristic[2]):
+                    if e <= 0.0016:
+                        self.chem_acc_num_q = num_q
+                        break
+                order = heuristic[3]
+
+            self.order, self.ham_reduced = cs.reduced_hamiltonian(order)
+
 
     def sim_qubits(self, num_sim_q, complement=False):
         """ Specifies which qubits of the full electronic structure problem are to be simulated
@@ -220,7 +225,7 @@ class cs_vqe_circuit():
 
         for i in self.sim_qubits(num_sim_q, complement=True)[0]:
             if i in Z_qubits:
-                lost_parity += int(self.init_state[self.num_qubits-1-i])
+                lost_parity += int(self.reference_state()[self.num_qubits-1-i])
 
         return lost_parity%2
     
