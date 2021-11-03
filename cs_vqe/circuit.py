@@ -135,7 +135,7 @@ class cs_vqe_circuit():
             self.terms_noncon   = model_data["terms_noncon"]
             self.num_tapered    = model_data["num_tapered"]
             self.true_gs_nrg    = model_data["true_gs_nrg"]
-            self.true_gs_vec    = model_data["true_gs_vec"]
+            #self.true_gs_vec    = model_data["true_gs_vec"]
             self.ham_rotations  = model_data["ham_rotations"]
             self.noncon         = model_data["noncon"]
             self.truegs         = model_data["truegs"]
