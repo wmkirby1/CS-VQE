@@ -6,7 +6,6 @@ import utils.bit_tools as bit
 import utils.linalg_tools as la
 import itertools
 # OpenFermion libraries
-import openfermion
 from openfermion import MolecularData
 from openfermionpyscf import run_pyscf
 from openfermion.ops import FermionOperator, QubitOperator

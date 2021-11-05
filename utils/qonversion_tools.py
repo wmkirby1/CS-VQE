@@ -1,12 +1,20 @@
 from openfermion.ops import QubitOperator
 from qiskit.aqua.operators.legacy import WeightedPauliOperator
-from qiskit.quantum_info.operators import Operator, Pauli
-from qiskit.aqua.operators.primitive_ops.pauli_op import PauliOp
+try:
+    on_QLM = False
+    print('Will store matrices in sparse form')
+    from qiskit.quantum_info.operators.symplectic.pauli import Pauli
+    from qiskit.opflow.primitive_ops import PauliOp
+except:
+    on_QLM = True
+    print('Will store matrices in dense form')
+    from qiskit.quantum_info.operators import Pauli
+    from qiskit.aqua.operators.primitive_ops.pauli_op import PauliOp
 from openfermion.ops import FermionOperator
 try:
     from qiskit_nature.operators.second_quantization.fermionic_op import FermionicOp
 except:
-    print('Package not installed')
+    print('Qiskit Nature not installed')
 
 PAULI_STRINGS_LOOKUP = {'I':0,'X':1,'Y':2,'Z':3}
 PAULI_STRINGS_LOOKUP_REVERSE = {0:'I', 1:'X', 2:'Y', 3:'Z'}
@@ -52,7 +60,10 @@ def WeightedPauliOperator_to_dict(op):
 
 def dict_to_WeightedPauliOperator(op):
     assert(type(op) == dict)
-    return sum([PauliOp(Pauli(label=p), op[p]) for p in op.keys()])
+    if on_QLM:
+        return sum([PauliOp(Pauli(label=p), op[p]) for p in op.keys()])
+    else:
+        return sum([PauliOp(Pauli(p), op[p]) for p in op.keys()])
 
 
 def dict_to_list_index(ham_dict):
