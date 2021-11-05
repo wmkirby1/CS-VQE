@@ -129,7 +129,8 @@ class cs_vqe_circuit():
 
         if model_data is not None:
             self.hamiltonian    = model_data["ham"]
-            self.uccsd          = model_data["uccsd"]
+            self.uccsd3         = model_data["uccsd3"]
+            self.uccsd5         = model_data["uccsd5"]
             self.num_qubits     = model_data["num_qubits"]
             self.HF_config      = model_data["hf_config"]
             self.terms_noncon   = model_data["terms_noncon"]
