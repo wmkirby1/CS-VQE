@@ -14,7 +14,6 @@ from openfermion.transforms import get_fermion_operator
 from openfermion.circuits import (uccsd_singlet_get_packed_amplitudes,
                                uccsd_singlet_generator)
 # Qiskit libraries
-from qiskit.quantum_info.operators.symplectic.pauli import Pauli
 from qiskit_nature.operators.second_quantization.fermionic_op import FermionicOp
 from qiskit_nature.drivers import UnitsType, Molecule
 from qiskit_nature.drivers.second_quantization import ElectronicStructureDriverType, ElectronicStructureMoleculeDriver
