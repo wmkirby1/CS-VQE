@@ -14,7 +14,6 @@ from openfermion.transforms import get_fermion_operator
 from openfermion.circuits import (uccsd_singlet_get_packed_amplitudes,
                                uccsd_singlet_generator)
 # Qiskit libraries
-from qiskit.quantum_info.operators.symplectic.pauli import Pauli
 from qiskit_nature.operators.second_quantization.fermionic_op import FermionicOp
 from qiskit_nature.drivers import UnitsType, Molecule
 from qiskit_nature.drivers.second_quantization import ElectronicStructureDriverType, ElectronicStructureMoleculeDriver
@@ -24,7 +23,7 @@ from qiskit_nature.mappers.second_quantization import JordanWignerMapper, Parity
 from qiskit_nature.circuit.library.initial_states.hartree_fock import hartree_fock_bitstring
 
 
-def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, sym_sector=None):
+def construct_molecule(atoms, coords, charge, multiplicity, basis, excitation_threshold=None, taper=False, sym_sector=None):
     """
     """
     # generate speciesname string from atoms
@@ -50,14 +49,43 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
     num_qubits = 2*molecule.n_orbitals
     # construct second quantised Hamiltonian:
     ham_2ndQ = get_fermion_operator(molecule.get_molecular_hamiltonian())
+    #hf_config_bool = hartree_fock_bitstring(num_particles=num_particles,
+    #                                        num_spin_orbitals=num_qubits)
+    hf_config_bool = [True for i in range(num_electrons)] + [False for i in range(num_qubits-num_electrons)] # in jordan-wigner
+    
     # construct second quantised UCCSD operator:
     ccsd_single_amps = molecule.ccsd_single_amps
     ccsd_double_amps = molecule.ccsd_double_amps
     packed_amps = uccsd_singlet_get_packed_amplitudes(ccsd_single_amps,  ccsd_double_amps, num_qubits, num_electrons)
     ucc_2ndQ = uccsd_singlet_generator(packed_amps, num_qubits, num_electrons)
-    
-    hf_config_bool = hartree_fock_bitstring(num_particles=num_particles,
-                                            num_spin_orbitals=num_qubits)
+    ansatze = {'uccsd':ucc_2ndQ}
+
+    if excitation_threshold is not None:
+        # determine most significant uccsd terms
+        hf_config = ''.join([str(int(b)) for b in hf_config_bool])
+        ham_mat = qonvert.dict_to_WeightedPauliOperator(qonvert.QubitOperator_to_dict(jordan_wigner(ham_2ndQ), num_qubits)).to_matrix()
+        gsnrg, gsvec = la.get_ground_state(ham_mat)
+        gsprobs = [abs(amp)**2 for amp in gsvec]
+        bstates = [bit.int_to_bin(i, num_qubits) for i in range(2**num_qubits)]
+        threshold_list = [('excite'+str(n+1), 0.1/(10**n)) for n in range(2, excitation_threshold)]
+        for anz_name, threshold in threshold_list:
+            sig_state_order = [s for s in sorted(list(zip(gsprobs, bstates)), key=lambda x:-x[0]) if s[0]>threshold]
+            reduccsd = FermionOperator()
+
+            for amp, state in sig_state_order:
+                exCite = [index for index, b in enumerate(zip(state, hf_config)) if len(set(b))==2]
+                if len(exCite)==2:
+                    reduccsd += amp*FermionOperator([(exCite[0],1),(exCite[1],0)])
+                    reduccsd -= amp*FermionOperator([(exCite[1],1),(exCite[0],0)])
+                if len(exCite)==4:
+                    order1 = [2, 0, 3, 1]
+                    order2 = [3, 1, 2, 0]
+                    reduccsd += amp*FermionOperator([(cite, (index+1)%2) for index, cite in enumerate([exCite[i] for i in order1])])
+                    reduccsd -= amp*FermionOperator([(cite, (index+1)%2) for index, cite in enumerate([exCite[i] for i in order1][::-1])])
+                    reduccsd += amp*FermionOperator([(cite, (index+1)%2) for index, cite in enumerate([exCite[i] for i in order2])])
+                    reduccsd -= amp*FermionOperator([(cite, (index+1)%2) for index, cite in enumerate([exCite[i] for i in order2][::-1])])
+            ucc_2ndQ=reduccsd
+            ansatze[anz_name] = ucc_2ndQ
 
     if not taper:
         ham_q = jordan_wigner(ham_2ndQ)
@@ -68,6 +96,9 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
         num_tapered=0
         ham_mat = qonvert.dict_to_WeightedPauliOperator(ham).to_matrix()
         true_gs_nrg, true_gs_vec = la.get_ground_state(ham_mat)
+        for a in ansatze.keys():
+            ucc_q = jordan_wigner(ansatze[a])
+            ansatze[a] = qonvert.QubitOperator_to_dict(ucc_q, num_qubits)
 
     else:
         # now we duplicate this electronic structure problem in Qiskit Nature for Z2 symmetry identification
@@ -77,8 +108,6 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
         second_q_op = es_problem.second_q_ops()
         # Map Hamiltonian and UCCSD operators from OpenFermion to Qiskit Nature representation
         ham_2ndQ_mapped = qonvert.fermionic_openfermion_to_qiskit(ham_2ndQ, num_qubits)
-        ucc_2ndQ_mapped = qonvert.fermionic_openfermion_to_qiskit(ucc_2ndQ, num_qubits)
-
         # Determine tapering stabilisers and (hopefully) correct sector with Qiskit Nature:
         qubit_converter = QubitConverter(JordanWignerMapper(), z2symmetry_reduction='auto')
         ham_ref = qubit_converter.convert(ham_2ndQ_mapped) # stores the Z2 symmetries in qubit_converter 
@@ -121,19 +150,24 @@ def construct_molecule(atoms, coords, charge, multiplicity, basis, taper=False, 
             else:
                 print('Energy mismatch with target problem in sector %s, trying another...' % str(Z2sec))
 
-        ucc_q = QubitConverter(JordanWignerMapper()).convert(ucc_2ndQ_mapped)
-        ucc_tap = qubit_taper.z2symmetries.taper(ucc_q)
+        for a in ansatze.keys():
+            ucc_2ndQ_mapped = qonvert.fermionic_openfermion_to_qiskit(ansatze[a], num_qubits)
+            ucc_q = QubitConverter(JordanWignerMapper()).convert(ucc_2ndQ_mapped)
+            ucc_tap = qubit_taper.z2symmetries.taper(ucc_q)
+            ucc = {op:coeff.imag for op, coeff in qonvert.PauliOp_to_dict(ucc_tap).items() if abs(coeff)>1e-15}
+            ansatze[a] = ucc
 
         num_qubits = ham_tap.num_qubits
-        ham = qonvert.PauliOp_to_dict(ham_tap)
-        ucc = qonvert.PauliOp_to_dict(ucc_tap)
+        ham = {op:coeff.real for op, coeff in qonvert.PauliOp_to_dict(ham_tap).items() if abs(coeff)>1e-15}
+        
     
     return {'speciesname':speciesname,
-            'num_qubits': num_qubits,
-            'hamiltonian':ham,
-            'uccsdansatz':ucc,
-            'hf_config':  hf_config,
+            'num_qubits' :num_qubits,
             'num_tapered':num_tapered,
+            'hamiltonian':ham,
+            'ansatze'    :ansatze,
+            'hf_config'  :hf_config,
+            'hf_energy'  :molecule.hf_energy,
             'true_gs_nrg':true_gs_nrg,
             'true_gs_vec':true_gs_vec}
 

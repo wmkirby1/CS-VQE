@@ -2,14 +2,15 @@ from openfermion.ops import QubitOperator
 from qiskit.aqua.operators.legacy import WeightedPauliOperator
 try:
     on_QLM = False
-    print('Will store matrices in sparse form')
     from qiskit.quantum_info.operators.symplectic.pauli import Pauli
     from qiskit.opflow.primitive_ops import PauliOp
+    print('Will store matrices in sparse form')
 except:
     on_QLM = True
-    print('Will store matrices in dense form')
     from qiskit.quantum_info.operators import Pauli
     from qiskit.aqua.operators.primitive_ops.pauli_op import PauliOp
+    print('Will store matrices in dense form')
+    
 from openfermion.ops import FermionOperator
 try:
     from qiskit_nature.operators.second_quantization.fermionic_op import FermionicOp
