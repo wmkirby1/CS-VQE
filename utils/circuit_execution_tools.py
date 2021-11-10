@@ -10,7 +10,7 @@ from qiskit.ignis.mitigation.measurement import CompleteMeasFitter, TensoredMeas
 from qiskit.algorithms import VQE
 from qiskit_nature.runtime import VQEProgram
 import utils.qonversion_tools as qonvert
-from cs_vqe_classes.cs_vqe_circuit import cs_vqe_circuit
+from cs_vqe.circuit import cs_vqe_circuit
 
 
 def get_quantum_instance(seed, noise=False, run_local=True, error_mitigation=None):
