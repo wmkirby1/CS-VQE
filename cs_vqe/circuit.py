@@ -16,13 +16,17 @@ from openfermion.linalg import get_ground_state, jw_configuration_state
 from qiskit.circuit import Parameter, ParameterVector
 from qiskit.circuit.quantumcircuit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
-from qiskit.aqua import QuantumInstance
+try:
+    from qiskit.utils import QuantumInstance
+    from qiskit.algorithms import VQE
+except:
+    print('Could not import some (non-essential) packages as not installed')
 #from qiskit.utils import QuantumInstance, algorithm_globals
 from qiskit.aqua.components.optimizers import (SLSQP, COBYLA, SPSA, AQGD, L_BFGS_B, P_BFGS,
                                                 NELDER_MEAD, CG, ADAM, POWELL, TNC, GSLS,
                                                 NFT)#, IMFIL, BOBYQA, SNOBFIT)
 from qiskit import Aer
-from qiskit.aqua.algorithms import VQE, NumPyMinimumEigensolver
+#, NumPyMinimumEigensolver
 from qiskit.circuit.library import TwoLocal
 #from qiskit.opflow import I, X, Z
 from qiskit.providers.aer import QasmSimulator
@@ -726,8 +730,8 @@ class cs_vqe_circuit():
         self.anz_block(anz_terms, qc, num_sim_q)
 
         # Qiskit variational_algorithm struggling with only one parameter
-        if qc.num_parameters == 1:
-            qc.rz(Parameter('b'), 0)
+        #if qc.num_parameters == 1:
+        #    qc.rz(Parameter('b'), 0)
 
         # Cancellation of neighbouring S, Sdg and H gates arising from exponentiation
         self.cancel_pairs(circ=qc, hit_set={'s', 'sdg'})

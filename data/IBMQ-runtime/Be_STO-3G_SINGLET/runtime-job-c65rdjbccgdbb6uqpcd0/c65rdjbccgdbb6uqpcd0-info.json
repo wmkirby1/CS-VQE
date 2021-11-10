@@ -1,0 +1,16 @@
+{
+  "id": "c65rdjbccgdbb6uqpcd0",
+  "hub": "ibm-q",
+  "group": "open",
+  "project": "main",
+  "backend": "ibmq_quito",
+  "status": "Completed",
+  "params": [
+    "{\"ansatz\": {\"__type__\": \"QuantumCircuit\", \"__value__\": \"eJwL9Az29gxhZBBiZoAARgYeBgRgRmKzgGUhICU5syi5NLNE19jc0jSvNCenkBGsmrEQbgwDAxNcKyuSKDKIcE8sSS0EKyWohIGBHYeS4JR0mCJGnOZ4kKCEgYENKsSEpsQZ4RyIWYQVMkL8xwa1EN3SoCh4GKRChfzR3KfgW5qj4ZlXkpqeWqSha6ipoxBcmZuUn6OhHhBtEKuuqVkAN42lae+rF9H7vBnXP/l0ardBfyxIBWmOpJK3kRTi9zYjOd42RPN2x6mQQNEAx/buoCs7Z6l7MoFUEO9IIhIEEWkPdxr2QCghwhzc2WUoJlAjtJj6Ut6uHT/F/f4Uh8BDq0xO/QKpoEECJSIqcCkJJiFCcVsUTEJ5Q5RFQybGjdFifDIT5ztfcS+3NT5m+x7zxKiCVAyuGCetbiAY49QrLYZTQWCCliymhB2es+ej36QJxfkNq6e9CQepGLiaimbeNkXzdukBly+qexz2zp5cJfvj+uZakAriHUmdYo1aDakhk/ZGW0lgb4+2knD5baAT6GgrabSVNNpKgikZbSXBwGgraeBaSYSTFQAOfAlE\"}, \"operator\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.opflow.primitive_ops.pauli_sum_op\", \"__class__\": \"PauliSumOp\", \"__value__\": {\"primitive\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.sparse_pauli_op\", \"__class__\": \"SparsePauliOp\", \"__value__\": {\"data\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.pauli_table\", \"__class__\": \"PauliTable\", \"__value__\": {\"data\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBek2SorqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RpGBjoKZpo6CrUK5AIuBhhgBEIgycgI4YDZDMgUQpgRJgokIAiqHwIRwoxgANXDiCIMAHtdG+4=\"}}}, \"coeffs\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2xopq6joJ6WX1RSlJgXn1+UkgqScEvMKU4FihdnJBakAvkaRgY6mjoKtQpkA647+cUtmr80DjBAQdzm2Q2q5a/34+Kf0N/ct3DGdHsYPxoiD+f/0AXLI9Sj8afcrDkt1/8EzmeVueB15UqHPRofXZ5s9WdKeBlkLZeh8+2pxQcATkZnSg==\"}}}, \"coeff\": 1.0, \"grouping_type\": \"None\"}}, \"optimizer\": {\"name\": \"QN-SPSA\", \"maxiter\": 150, \"resamplings\": {\"15\": 150}}, \"initial_parameters\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2ahrqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RpmOpo6CrUKFAAuBhIBAHfAG2E=\"}, \"measurement_error_mitigation\": true}"
+  ],
+  "program": {
+    "id": "vqe"
+  },
+  "created": "2021-11-10T12:10:53.377786Z",
+  "runtime": "qiskit-program:a059b14"
+}

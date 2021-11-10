@@ -187,6 +187,12 @@ def get_molecule(speciesname, taper=False):
         else:
             print('*** sector saved, will check tapered ground state energy matches target problem ***')
     
-    mol_out = construct_molecule(atoms, coords, charge, multiplicity, basis, taper, sym_sector)
-    
+    mol_out = construct_molecule(atoms=atoms, 
+                                coords=coords, 
+                                charge=charge, 
+                                multiplicity=multiplicity, 
+                                basis=basis, 
+                                taper=taper, 
+                                sym_sector=sym_sector)
+   
     return mol_out

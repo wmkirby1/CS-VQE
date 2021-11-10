@@ -10,7 +10,7 @@ from qiskit.ignis.mitigation.measurement import CompleteMeasFitter, TensoredMeas
 from qiskit.algorithms import VQE
 from qiskit_nature.runtime import VQEProgram
 import utils.qonversion_tools as qonvert
-from cs_vqe_classes.cs_vqe_circuit import cs_vqe_circuit
+from cs_vqe.circuit import cs_vqe_circuit
 
 
 def get_quantum_instance(seed, noise=False, run_local=True, error_mitigation=None):
@@ -146,7 +146,7 @@ def remote_circuit_execution(mol_circ, num_sim_q, anz_op, backend='ibmq_qasm_sim
     
     optimizer = {'name': 'QN-SPSA',
                  'maxiter': maxiter,
-                 'resamplings': {int(qfi_resamples/10): qfi_resamples}}
+                 'resamplings': {int(qfi_resamples/100): qfi_resamples}}
     provider = IBMQ.get_provider(hub='ibm-q',group='open',project='main')
     options = {'backend_name': backend}
     
