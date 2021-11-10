@@ -1,6 +1,6 @@
 # CS-VQE Ansatz Builder
 
-Based on the foundational CS-VQE work of [https://arxiv.org/abs/2011.10027](https://arxiv.org/abs/2011.10027), making use of the original code found at [https://github.com/wmkirby1/ContextualSubspaceVQE](https://github.com/wmkirby1/ContextualSubspaceVQE).
+Based on the foundational CS-VQE work of [https://quantum-journal.org/papers/q-2021-05-14-456/](https://quantum-journal.org/papers/q-2021-05-14-456/), making use of the original code found at [https://github.com/wmkirby1/ContextualSubspaceVQE](https://github.com/wmkirby1/ContextualSubspaceVQE).
 
 ## What is included
 
