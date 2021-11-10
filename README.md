@@ -14,7 +14,7 @@ Based on the foundational CS-VQE work of [https://quantum-journal.org/papers/q-2
 
 When you use ContextualSubspaceVQE in a publication or other work, please cite as:
 
-> Kirby, William M., Andrew Tranter, and Peter J. Love. "Contextual Subspace Variational Quantum Eigensolver." Quantum 5 (2021): 456., [DOI:10.22331/q-2021-05-14-456](https://quantum-journal.org/papers/q-2021-05-14-456/).
+> Kirby, William M., Andrew Tranter, and Peter J. Love. "Contextual Subspace Variational Quantum Eigensolver." Quantum 5 (2021): 456., [DOI: 10.22331/q-2021-05-14-456](https://quantum-journal.org/papers/q-2021-05-14-456/).
 
 ## How to use
 
