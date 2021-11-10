@@ -146,7 +146,7 @@ def remote_circuit_execution(mol_circ, num_sim_q, anz_op, backend='ibmq_qasm_sim
     
     optimizer = {'name': 'QN-SPSA',
                  'maxiter': maxiter,
-                 'resamplings': {int(qfi_resamples/10): qfi_resamples}}
+                 'resamplings': {int(qfi_resamples/100): qfi_resamples}}
     provider = IBMQ.get_provider(hub='ibm-q',group='open',project='main')
     options = {'backend_name': backend}
     

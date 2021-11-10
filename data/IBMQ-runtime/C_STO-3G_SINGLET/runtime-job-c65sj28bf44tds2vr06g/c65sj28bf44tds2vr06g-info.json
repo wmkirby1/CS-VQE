@@ -1,0 +1,16 @@
+{
+  "id": "c65sj28bf44tds2vr06g",
+  "hub": "ibm-q",
+  "group": "open",
+  "project": "main",
+  "backend": "ibmq_quito",
+  "status": "Completed",
+  "params": [
+    "{\"ansatz\": {\"__type__\": \"QuantumCircuit\", \"__value__\": \"eJwL9Az29gxhZBBiZoAARgYeBgRgQWMzQtkSyZlFyaWZJboWRiZGeaU5OYWMYBWMhXBjGBiYgJgZrp0VSQYZRLgnlqQWgiUIKmFgYMehJDglHaaICac5HgglRJiD2z0eCCVEmIPb6x4IJWxQISY0Jc4Iv0MsJKyQEeJDNqiF6JYGRcFDIRUq5I/mPgXf0hwNz7yS1PTUIg1dQ00dheDK3KT8HA31gGiDWHVNzQK4aSw//1xRKTjipbBYUc82VLTsN0gFaY6kkrdHdvgQkeRxKQkmIePgtiiYhGyDO0fATWEAAA0Cb+8=\"}, \"operator\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.opflow.primitive_ops.pauli_sum_op\", \"__class__\": \"PauliSumOp\", \"__value__\": {\"primitive\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.sparse_pauli_op\", \"__class__\": \"SparsePauliOp\", \"__value__\": {\"data\": {\"__type__\": \"settings\", \"__module__\": \"qiskit.quantum_info.operators.symplectic.pauli_table\", \"__class__\": \"PauliTable\", \"__value__\": {\"data\": {\"__type__\": \"ndarray\", \"__value__\": \"eJydUDEOAiEQZFpfQYcmFFqYGB9gp7GxsDLoYSyMZ8DYqK/ww97B7sK1EgI7szPLLt/Nbr3dQz3VyzQ+noJZavM+zozV5tyGR3C3Qxsa3/Mrd42+4+PF3X2Hx/Op1YuJ1R/97xqpwQKdAKF8g3iIjAkUV4IYpqWgKIaFUqZ6jl09Qe6EUgxV72KBGFMkXYgP7CAmB0SCM1Ks6FicJ+WupEPFRhLIwKj/pLRW6eralUzhBz6EHGY=\"}}}, \"coeffs\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2xopq6joJ6WX1RSlJgXn1+UkgqScEvMKU4FihdnJBakAvkapgY6mjoKtQpkA65lar+4L76xO8AABTvn1chO5LhuD+P/iixc/GjjJTifoXpbrFbjCThfo/Hq1M79C/bD+J8P9q2/xFEG57+EyMPVG98Gy8P567qbckxnHYHzGTdeQVG/6vi1E0c7LsL5wg5TUfQbQtTD7Zv5PK902+tbcL6cx1QU9/R8Ek3U1hWF+/fax86vT4/W7kfjI9wX2ICNj1M9unnPzJatPDtxkj0u/iHFVhT9UP5+EuVxqn9wYP7S5pR8OP8AhA9XfwNNfbZJ17y9/7rg/Ato5h9D40PV70dTD9cvjhY/4mjx6xl4DUUeykfXj9M8A7T0Z4CW3nDwCamHywMAvaoG2g==\"}}}, \"coeff\": 1.0, \"grouping_type\": \"None\"}}, \"optimizer\": {\"name\": \"QN-SPSA\", \"maxiter\": 150, \"resamplings\": {\"15\": 150}}, \"initial_parameters\": {\"__type__\": \"ndarray\", \"__value__\": \"eJyb7BfqGxDJyFDGUK2eklqcXKRupaBuk2ahrqOgnpZfVFKUmBefX5SSChJ3S8wpTgWKF2ckFqQC+RqGOpo6CrUKFACuoEyJY/fTp9sDAD7gHxE=\"}, \"measurement_error_mitigation\": true}"
+  ],
+  "program": {
+    "id": "vqe"
+  },
+  "created": "2021-11-10T13:30:49.672103Z",
+  "runtime": "qiskit-program:a059b14"
+}
