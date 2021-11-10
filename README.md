@@ -8,12 +8,13 @@ Based on the foundational CS-VQE work of [https://quantum-journal.org/papers/q-2
 - Qubit tapering funtionality making use of [Qiskit Nature](https://qiskit.org/documentation/nature/);
 - Qubit conversion between Qiskit, OpenFermion and AQASM representations;
 - Circuit class for constructing and executing CS-VQE Ansatz circuits;
+- An implementation of the *noncontextual projection Ansatz*
 
 ## How to cite
 
 When you use ContextualSubspaceVQE in a publication or other work, please cite as:
 
-> William M. Kirby, Andrew Tranter, and Peter J. Love, *Contextual Subspace Variational Quantum Eigensolver*, arXiv preprint (2020), [arXiv:2011.10027](https://arxiv.org/abs/2011.10027).
+> Kirby, William M., Andrew Tranter, and Peter J. Love. "Contextual Subspace Variational Quantum Eigensolver." Quantum 5 (2021): 456., [10.22331/q-2021-05-14-456](https://quantum-journal.org/papers/q-2021-05-14-456/).
 
 ## How to use
 
